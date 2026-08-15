@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+@theme {
+  --color-pokeball: #ff0000;
+  --color-pikachu: #ffde00;
+  --color-pokemon-blue: #3b4cca;
+  --font-sans: Inter, 'Segoe UI', Roboto, sans-serif;
+}
+
+body {
+  @apply min-h-screen bg-linear-to-br from-orange-50 to-amber-100 text-gray-800 antialiased;
+}
+
+#root {
+  min-height: 100vh;
+}

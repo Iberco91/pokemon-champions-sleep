@@ -1,0 +1,95 @@
+export const sleepSpecialties = ['Berries', 'Ingredients', 'Skills']
+
+// Nombres de sub-skills tal como los define CLAUDE.md sección 1.2 (fuente de
+// verdad del motor de scoring de la Fase 4). "Berry Finding S" es la única
+// obligatoria para especies de Berries.
+export const subskillOptions = [
+  'Berry Finding S',
+  'Helping Bonus',
+  'Helping Speed S',
+  'Helping Speed M',
+  'Helping Speed L',
+  'Ingredient Finder S',
+  'Ingredient Finder M',
+  'Inventory Up S',
+  'Inventory Up M',
+  'Inventory Up L',
+  'Skill Trigger S',
+  'Skill Trigger M',
+  'Skill Trigger L',
+]
+
+// Naturalezas curadas: cada una declara qué stat sube (lo único que usa el
+// motor de scoring de la Fase 4, según la tabla de CLAUDE.md 1.2). Set inicial
+// para revisar/ampliar con la lista oficial completa de 25 naturalezas.
+export const natureOptions = [
+  { name: 'Bashful', positive: null },
+  { name: 'Hasty', positive: 'Helping Speed' },
+  { name: 'Jolly', positive: 'Helping Speed' },
+  { name: 'Relaxed', positive: 'Ingredient Finding' },
+  { name: 'Careful', positive: 'Ingredient Finding' },
+  { name: 'Bold', positive: 'Main Skill Chance' },
+  { name: 'Calm', positive: 'Main Skill Chance' },
+  { name: 'Modest', positive: 'Energy Recovery' },
+  { name: 'Gentle', positive: 'Energy Recovery' },
+  { name: 'Adamant', positive: 'EXP Gain' },
+]
+
+// Líneas evolutivas curadas para el comparador de la Fase 5 (CLAUDE.md 1.3).
+// Cubre el lote de 11 especies sembrado en supabase/seed.sql. Ampliar cuando
+// se cargue el Pokédex completo en la Fase 9.
+export const evolutionFamilies = [
+  ['Pikachu', 'Raichu'],
+  ['Gastly', 'Haunter', 'Gengar'],
+  ['Eevee', 'Sylveon'],
+]
+
+export function getEvolutionFamily(speciesName) {
+  return evolutionFamilies.find((family) => family.includes(speciesName)) ?? [speciesName]
+}
+
+// Mapas curados para el optimizer de equipo de la Fase 6 (CLAUDE.md 1.4).
+// Set inicial de referencia — ampliar con el resto de mapas del juego.
+export const snorlaxMaps = ['Greengrass Isle', 'Cyan Beach', 'Taupe Hollow']
+
+export const dishTypes = ['Curry', 'Ensaladas', 'Postres']
+
+// Las 81 recetas reales (con ingredientes, bonus% y fórmula de valor) viven
+// ahora en src/data/sleepRecipes.js — reemplaza a este placeholder que tenía
+// valores de "value" inventados.
+
+export const sleepLevels = { min: 1, max: 100 }
+
+// Niveles de desbloqueo de sub-skills. Desde el parche 3.6.0 (25/06/2026) el
+// juego bajó los dos últimos: 75->70 y 100->80 (fuente: pokemonsleep.net,
+// notas de actualización oficiales). Si cambian de nuevo, este es el único
+// lugar que hay que tocar — sleepScoring.js y sleepStats.js lo importan.
+export const subskillLevels = [10, 25, 50, 70, 80]
+
+// Ingredientes conocidos del juego. Lista de referencia inicial, ampliable.
+// Lista completa de los 19 ingredientes reales del juego (fuente:
+// src/data/sleepRecipes.js). "Snoozy Toadstool" no existe en el juego real —
+// era un nombre inventado; el correcto es "Snoozy Tomato". También se
+// agregaron los 5 ingredientes que faltaban (Corn, Coffee, Avocado, Pumpkin,
+// Tomato).
+export const ingredientOptions = [
+  'Bean Sausage',
+  'Fancy Apple',
+  'Warming Ginger',
+  'Honey',
+  'Moomoo Milk',
+  'Pure Oil',
+  'Soft Potato',
+  'Fiery Herb',
+  'Snoozy Tomato',
+  'Tasty Mushroom',
+  'Greengrass Soybeans',
+  'Slowpoke Tail',
+  'Large Leek',
+  'Soothing Cacao',
+  'Fancy Egg',
+  'Greengrass Corn',
+  'Rousing Coffee',
+  'Glossy Avocado',
+  'Plump Pumpkin',
+]
