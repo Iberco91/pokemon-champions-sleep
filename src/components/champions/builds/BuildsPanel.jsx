@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useAuth } from '../../../hooks/useAuth.js'
 import { useChampionsBox } from '../../../hooks/useChampionsBox.js'
+import ConfirmDeleteButton from '../../shared/ConfirmDeleteButton.jsx'
 import {
   abilities,
   battleStats,
@@ -259,13 +260,10 @@ export default function BuildsPanel() {
                 <strong>{entry.nickname || entry.species}</strong> — {entry.species} · {entry.format} ·{' '}
                 {entry.nature} · Tera {entry.tera_type}
               </div>
-              <button
-                type="button"
-                onClick={() => removePokemon(entry.id)}
-                className="text-xs font-semibold text-red-600 underline shrink-0"
-              >
-                Eliminar
-              </button>
+              <ConfirmDeleteButton
+                label={entry.nickname || entry.species}
+                onConfirm={() => removePokemon(entry.id)}
+              />
             </li>
           ))}
         </ul>

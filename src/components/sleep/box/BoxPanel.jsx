@@ -13,6 +13,7 @@ import { computeRp } from '../../../lib/sleepRp.js'
 import { getMainSkillMaxLevel } from '../../../data/sleepRpTables.js'
 import { evaluateSleepPokemon } from '../../../lib/sleepScoring.js'
 import PokemonDetailModal from './PokemonDetailModal.jsx'
+import ConfirmDeleteButton from '../../shared/ConfirmDeleteButton.jsx'
 
 // Horas de sueño acumulado requeridas por nivel de Good-Night Ribbon
 // (verificado 2026-09-03 contra Serebii/Game8): 200h, 500h, 1000h, 2000h.
@@ -460,13 +461,10 @@ export default function BoxPanel() {
                   +
                 </button>
               </div>
-              <button
-                type="button"
-                onClick={() => removePokemon(entry.id)}
-                className="text-xs font-semibold text-red-600 underline shrink-0"
-              >
-                Eliminar
-              </button>
+              <ConfirmDeleteButton
+                label={entry.nickname || entry.species?.name}
+                onConfirm={() => removePokemon(entry.id)}
+              />
             </li>
           ))}
         </ul>
