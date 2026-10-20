@@ -24,17 +24,19 @@ export default function ConfirmDeleteButton({ label, onConfirm }) {
       <button
         type="button"
         onClick={() => setConfirming(true)}
-        className="text-xs font-semibold text-red-600 underline shrink-0"
+        className="ml-auto text-xs font-semibold text-red-600 underline shrink-0"
       >
         Eliminar
       </button>
     )
   }
 
+  // basis-full pushes the confirmation onto its own line inside the
+  // (flex-wrap) list row, so it never overflows narrow cards.
   return (
-    <div className="flex flex-col items-end gap-1 shrink-0">
-      <span className="text-xs font-semibold text-gray-800">¿Eliminar a {label}?</span>
-      <div className="flex gap-1">
+    <div className="basis-full flex flex-col gap-1.5 rounded-md border border-red-200 bg-red-50 p-2">
+      <span className="text-xs font-semibold text-gray-800 break-words">¿Eliminar a {label}?</span>
+      <div className="flex flex-wrap justify-end gap-1.5">
         <button
           type="button"
           onClick={() => setConfirming(false)}

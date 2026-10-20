@@ -431,7 +431,7 @@ export default function BoxPanel() {
           {box.map((entry) => (
             <li
               key={entry.id}
-              className="p-[0.6rem] rounded-lg bg-white border border-amber-200 flex justify-between items-center gap-2"
+              className="p-[0.6rem] rounded-lg bg-white border border-amber-200 flex flex-wrap justify-between items-center gap-2"
             >
               <button
                 type="button"
