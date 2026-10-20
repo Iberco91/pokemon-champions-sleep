@@ -149,3 +149,11 @@ CREATE TABLE champions_meta_cache (
 - **Manejo de Errores & Fallbacks:** Las llamadas a la API de Supabase y a la búsqueda del Meta de Champions deben tener estados de loading, error y fallback visuales.
 - **Respetar Reglas de Dominio de Pokémon Sleep:** El calculador de compatibilidad NUNCA debe marcar más de 0% de compatibilidad para un Pokémon de tipo Berries si no posee Berry Finding S en sus sub-skills.
 - **Limpieza Inicial de Proyecto:** Al iniciar el proyecto, eliminar los archivos de plantilla innecesarios creados por Vite (como `src/App.css`, `src/assets/react.svg`, etc.) y limpiar el boilerplate de `App.jsx` para dejar una estructura de carpetas mínima, limpia y lista para desarrollo.
+
+### ## 7.  Preferencias y Reglas de Ejecución
+
+### Modo Autónomo y Ediciones Directas
+- **Ejecución sin interrupciones:** Aplica todas las modificaciones de archivos, refactorizaciones y actualizaciones de código de forma directa, sin pedir confirmación o aprobación previa en cada paso.
+- **Operaciones de Git y gestión del proyecto:** Tienes autorización explícita para ejecutar comandos de Git (como `git commit`, `git push`, creación y gestión de ramas), eliminar archivos o ramas cuando sea necesario y modificar configuraciones compartidas o del entorno, sin pedir confirmación previa.
+- **Cambios en lote:** Al realizar tareas que involucren múltiples archivos, comandos o pasos, completa la totalidad de los cambios solicitados de manera autónoma antes de presentar el resultado final.
+- **Gestión de errores y reversión:** Si ocurre un error durante una modificación o comando automático, detén la ejecución, revierte los cambios o el estado del repositorio si es necesario y reporta el problema con el detalle correspondiente.

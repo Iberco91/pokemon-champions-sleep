@@ -2,14 +2,22 @@ import { useMemo, useState } from 'react'
 import { useAuth } from '../../../hooks/useAuth.js'
 import { useSpeciesCatalog } from '../../../hooks/useSpeciesCatalog.js'
 import { useSleepBox } from '../../../hooks/useSleepBox.js'
-import { ingredientOptions, natureOptions, sleepLevels, subskillLevels, subskillOptions } from '../../../data/sleepData.js'
+import { natureOptions, sleepLevels, subskillLevels, subskillOptions } from '../../../data/sleepData.js'
+import { getIngredientSlotOptions } from '../../../data/sleepIngredientSlots.js'
 import {
   computeCarryLimit,
   computeFrequencySeconds,
-  estimateRp,
   formatFrequency,
 } from '../../../lib/sleepStats.js'
-import { evaluateSleepPokemon, getEntryIngredients, getEntrySubskills } from '../../../lib/sleepScoring.js'
+import { computeRp } from '../../../lib/sleepRp.js'
+import { getMainSkillMaxLevel } from '../../../data/sleepRpTables.js'
+import { evaluateSleepPokemon } from '../../../lib/sleepScoring.js'
+import PokemonDetailModal from './PokemonDetailModal.jsx'
+
+// Horas de sueño acumulado requeridas por nivel de Good-Night Ribbon
+// (verificado 2026-09-03 contra Serebii/Game8): 200h, 500h, 1000h, 2000h.
+const RIBBON_HOURS = { 1: 200, 2: 500, 3: 1000, 4: 2000 }
+const ribbonOptions = [0, 1, 2, 3, 4]
 
 const TIER_BADGE_CLASS = {
   S: 'bg-emerald-100 text-emerald-800',
@@ -34,6 +42,8 @@ const emptyForm = {
   subskill_70: '',
   subskill_80: '',
   nature: '',
+  ribbon_level: 0,
+  skill_level: 1,
   rpOverride: false,
   current_rp: '',
 }
@@ -53,6 +63,7 @@ export default function BoxPanel() {
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState(null)
   const [levelUpdatingId, setLevelUpdatingId] = useState(null)
+  const [selectedEntryId, setSelectedEntryId] = useState(null)
 
   const selectedSpecies = useMemo(
     () => species.find((entry) => String(entry.id) === String(form.species_id)) ?? null,
@@ -63,33 +74,85 @@ export default function BoxPanel() {
     [form.nature],
   )
 
-  const previewCarryLimit = computeCarryLimit(form, selectedSpecies)
-  const previewFrequency = computeFrequencySeconds(form, selectedSpecies, selectedNature)
-  const estimatedRp = estimateRp(Number(form.level) || 1)
+  // Los <input>/<select> del formulario entregan siempre string (ej. level
+  // "65"), y baseValue + level en berryStrengthForLevel concatena texto en
+  // vez de sumar si no se normaliza antes — por eso se calcula acá, una sola
+  // vez, en el borde entre el formulario y la lógica de negocio.
+  const normalizedForm = useMemo(
+    () => ({
+      ...form,
+      level: Number(form.level) || 1,
+      ribbon_level: Number(form.ribbon_level) || 0,
+      skill_level: Number(form.skill_level) || 1,
+    }),
+    [form],
+  )
+
+  const ingredientOptionsA = getIngredientSlotOptions(selectedSpecies?.name, 'a')
+  const ingredientOptionsB = getIngredientSlotOptions(selectedSpecies?.name, 'b')
+  const ingredientOptionsC = getIngredientSlotOptions(selectedSpecies?.name, 'c')
+
+  const skillLevelMax = selectedSpecies ? getMainSkillMaxLevel(selectedSpecies.main_skill) : 6
+  const previewCarryLimit = computeCarryLimit(normalizedForm, selectedSpecies)
+  const previewFrequency = computeFrequencySeconds(normalizedForm, selectedSpecies, selectedNature)
+  const estimatedRp = computeRp(normalizedForm, selectedSpecies, selectedNature)
   const previewEvaluation = useMemo(() => {
     if (!selectedSpecies) return null
-    return evaluateSleepPokemon({
-      specialty: selectedSpecies.specialty,
-      subskills: getEntrySubskills(form),
-      ingredients: getEntryIngredients(form),
-      naturePositiveStat: selectedNature?.positive ?? null,
-    })
-  }, [selectedSpecies, selectedNature, form])
+    return evaluateSleepPokemon({ entry: normalizedForm, species: selectedSpecies, nature: selectedNature })
+  }, [selectedSpecies, selectedNature, normalizedForm])
 
   function handleChange(event) {
     const { name, value, type, checked } = event.target
     setForm((current) => ({ ...current, [name]: type === 'checkbox' ? checked : value }))
   }
 
+  // Cada especie solo puede tener 3 ingredientes fijos y específicos por
+  // slot (ver src/data/sleepIngredientSlots.js) — al cambiar de especie, los
+  // ingredientes elegidos para la anterior ya no son válidos.
+  function handleSpeciesChange(event) {
+    const { value } = event.target
+    setForm((current) => ({ ...current, species_id: value, ingredient_a: '', ingredient_b: '', ingredient_c: '' }))
+  }
+
   // Sube/baja el nivel de un Pokémon ya guardado y recalcula su RP con la
-  // misma fórmula de referencia que usa el alta (estimateRp), igual como
-  // subir de nivel en el juego actualiza el RP de un ayudante existente.
+  // misma fórmula real que usa el alta (computeRp), igual como subir de
+  // nivel en el juego actualiza el RP de un ayudante existente.
   async function handleLevelChange(entry, delta) {
     const nextLevel = Math.min(sleepLevels.max, Math.max(sleepLevels.min, (entry.level ?? 1) + delta))
     if (nextLevel === entry.level) return
     setLevelUpdatingId(entry.id)
-    await updatePokemon(entry.id, { level: nextLevel, current_rp: estimateRp(nextLevel) })
+    const entryNature = natureOptions.find((option) => option.name === entry.nature) ?? null
+    const nextRp = computeRp({ ...entry, level: nextLevel }, entry.species, entryNature)
+    await updatePokemon(entry.id, { level: nextLevel, current_rp: nextRp })
     setLevelUpdatingId(null)
+  }
+
+  // Guarda los cambios hechos en la ficha de detalle (mote, ingredientes,
+  // sub-skills, naturaleza, Ribbon, nivel de Main Skill) de un Pokémon ya
+  // existente en el box — recalcula RP y evaluación igual que en el alta.
+  async function handleEditSave(entry, patch) {
+    const editNature = natureOptions.find((option) => option.name === patch.nature) ?? null
+    const mergedEntry = { ...entry, ...patch }
+    const nextRp = patch.rpOverride ? Number(patch.current_rp) || null : computeRp(mergedEntry, entry.species, editNature)
+    const evaluation = entry.species
+      ? evaluateSleepPokemon({ entry: mergedEntry, species: entry.species, nature: editNature })
+      : null
+    await updatePokemon(entry.id, {
+      nickname: patch.nickname || null,
+      ingredient_a: patch.ingredient_a || null,
+      ingredient_b: patch.ingredient_b || null,
+      ingredient_c: patch.ingredient_c || null,
+      subskill_10: patch.subskill_10 || null,
+      subskill_25: patch.subskill_25 || null,
+      subskill_50: patch.subskill_50 || null,
+      subskill_70: patch.subskill_70 || null,
+      subskill_80: patch.subskill_80 || null,
+      nature: patch.nature || null,
+      ribbon_level: Number(patch.ribbon_level) || 0,
+      skill_level: Number(patch.skill_level) || 1,
+      current_rp: nextRp,
+      evaluation_score: evaluation?.score ?? null,
+    })
   }
 
   async function handleSubmit(event) {
@@ -115,9 +178,11 @@ export default function BoxPanel() {
       subskill_10: form.subskill_10 || null,
       subskill_25: form.subskill_25 || null,
       subskill_50: form.subskill_50 || null,
-      subskill_75: form.subskill_75 || null,
-      subskill_100: form.subskill_100 || null,
+      subskill_70: form.subskill_70 || null,
+      subskill_80: form.subskill_80 || null,
       nature: form.nature || null,
+      ribbon_level: Number(form.ribbon_level) || 0,
+      skill_level: Number(form.skill_level) || 1,
       evaluation_score: previewEvaluation?.score ?? null,
     })
     setSaving(false)
@@ -139,7 +204,7 @@ export default function BoxPanel() {
         <form className="flex flex-col gap-[0.7rem]" onSubmit={handleSubmit}>
           <label className={labelClass}>
             Especie
-            <select name="species_id" value={form.species_id} onChange={handleChange} className={selectClass}>
+            <select name="species_id" value={form.species_id} onChange={handleSpeciesChange} className={selectClass}>
               <option value="">Selecciona una especie</option>
               {species.map((entry) => (
                 <option key={entry.id} value={entry.id}>
@@ -173,8 +238,8 @@ export default function BoxPanel() {
             <input
               name="level"
               type="number"
-              min="1"
-              max="100"
+              min={sleepLevels.min}
+              max={sleepLevels.max}
               value={form.level}
               onChange={handleChange}
               className={selectClass}
@@ -183,34 +248,52 @@ export default function BoxPanel() {
 
           <div className="grid grid-cols-3 gap-2">
             <label className={labelClass}>
-              Ingrediente A
-              <select name="ingredient_a" value={form.ingredient_a} onChange={handleChange} className={selectClass}>
+              Ingrediente A (nivel 1)
+              <select
+                name="ingredient_a"
+                value={form.ingredient_a}
+                onChange={handleChange}
+                className={selectClass}
+                disabled={!selectedSpecies}
+              >
                 <option value="">—</option>
-                {ingredientOptions.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
+                {ingredientOptionsA.map((opt) => (
+                  <option key={opt.name} value={opt.name}>
+                    {opt.name} (x{opt.quantity})
                   </option>
                 ))}
               </select>
             </label>
             <label className={labelClass}>
-              Ingrediente B
-              <select name="ingredient_b" value={form.ingredient_b} onChange={handleChange} className={selectClass}>
+              Ingrediente B (nivel 30)
+              <select
+                name="ingredient_b"
+                value={form.ingredient_b}
+                onChange={handleChange}
+                className={selectClass}
+                disabled={!selectedSpecies}
+              >
                 <option value="">—</option>
-                {ingredientOptions.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
+                {ingredientOptionsB.map((opt) => (
+                  <option key={opt.name} value={opt.name}>
+                    {opt.name} (x{opt.quantity})
                   </option>
                 ))}
               </select>
             </label>
             <label className={labelClass}>
-              Ingrediente C
-              <select name="ingredient_c" value={form.ingredient_c} onChange={handleChange} className={selectClass}>
+              Ingrediente C (nivel 60)
+              <select
+                name="ingredient_c"
+                value={form.ingredient_c}
+                onChange={handleChange}
+                className={selectClass}
+                disabled={!selectedSpecies}
+              >
                 <option value="">—</option>
-                {ingredientOptions.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
+                {ingredientOptionsC.map((opt) => (
+                  <option key={opt.name} value={opt.name}>
+                    {opt.name} (x{opt.quantity})
                   </option>
                 ))}
               </select>
@@ -243,11 +326,35 @@ export default function BoxPanel() {
               {natureOptions.map((opt) => (
                 <option key={opt.name} value={opt.name}>
                   {opt.name}
-                  {opt.positive ? ` (+${opt.positive})` : ' (neutra)'}
+                  {opt.positive ? ` (+${opt.positive} / -${opt.negative})` : ' (neutra)'}
                 </option>
               ))}
             </select>
           </label>
+
+          <div className="grid grid-cols-2 gap-2">
+            <label className={labelClass}>
+              Nivel de Ribbon
+              <select name="ribbon_level" value={form.ribbon_level} onChange={handleChange} className={selectClass}>
+                {ribbonOptions.map((level) => (
+                  <option key={level} value={level}>
+                    {level}
+                    {RIBBON_HOURS[level] ? ` (${RIBBON_HOURS[level]} h de sueño acumulado)` : ''}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className={labelClass}>
+              Nivel de Main Skill
+              <select name="skill_level" value={form.skill_level} onChange={handleChange} className={selectClass}>
+                {Array.from({ length: skillLevelMax }, (_, index) => index + 1).map((level) => (
+                  <option key={level} value={level}>
+                    {level}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
 
           <label className="flex items-center gap-2 text-sm text-gray-600 font-semibold">
             <input type="checkbox" name="rpOverride" checked={form.rpOverride} onChange={handleChange} />
@@ -268,7 +375,7 @@ export default function BoxPanel() {
             </label>
           ) : (
             <p className="text-sm text-gray-600">
-              RP estimado automático: <strong>{estimatedRp}</strong>
+              RP estimado automático: <strong>{estimatedRp ?? '—'}</strong>
             </p>
           )}
 
@@ -303,6 +410,12 @@ export default function BoxPanel() {
               )}
             </p>
           )}
+          {previewEvaluation?.rpEfficiency != null && (
+            <p className="my-[0.2rem] text-gray-600 text-sm">
+              <strong>Eficiencia de RP:</strong> {previewEvaluation.rpEfficiency}% (RP {previewEvaluation.actualRp} de
+              un techo estimado de {previewEvaluation.idealRp} para este nivel/Ribbon/Main Skill)
+            </p>
+          )}
         </div>
       )}
 
@@ -314,25 +427,18 @@ export default function BoxPanel() {
           <p className="text-gray-600 text-sm">Todavía no tienes Pokémon registrados.</p>
         )}
         <ul className="flex flex-col gap-2">
-          {box.map((entry) => {
-            const entryNature = natureOptions.find((option) => option.name === entry.nature) ?? null
-            const entryEvaluation = entry.species
-              ? evaluateSleepPokemon({
-                  specialty: entry.species.specialty,
-                  subskills: getEntrySubskills(entry),
-                  ingredients: getEntryIngredients(entry),
-                  naturePositiveStat: entryNature?.positive ?? null,
-                })
-              : null
-            return (
+          {box.map((entry) => (
             <li
               key={entry.id}
               className="p-[0.6rem] rounded-lg bg-white border border-amber-200 flex justify-between items-center gap-2"
             >
-              <div className="text-sm text-gray-700">
-                <strong>{entry.nickname || entry.species?.name}</strong> — {entry.species?.name} ·{' '}
-                {entry.nature || 'sin naturaleza'} · RP {entry.current_rp ?? '—'}
-              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedEntryId(entry.id)}
+                className="text-sm font-bold text-gray-800 underline text-left"
+              >
+                {entry.nickname || entry.species?.name}
+              </button>
               <div className="flex items-center gap-1 shrink-0">
                 <button
                   type="button"
@@ -354,13 +460,6 @@ export default function BoxPanel() {
                   +
                 </button>
               </div>
-              {entryEvaluation && (
-                <span
-                  className={`px-2 py-[0.2rem] rounded-full text-xs font-bold shrink-0 ${TIER_BADGE_CLASS[entryEvaluation.tier]}`}
-                >
-                  {entryEvaluation.score}% · Tier {entryEvaluation.tier}
-                </span>
-              )}
               <button
                 type="button"
                 onClick={() => removePokemon(entry.id)}
@@ -369,10 +468,17 @@ export default function BoxPanel() {
                 Eliminar
               </button>
             </li>
-            )
-          })}
+          ))}
         </ul>
       </div>
+
+      <PokemonDetailModal
+        entry={box.find((entry) => entry.id === selectedEntryId) ?? null}
+        onClose={() => setSelectedEntryId(null)}
+        onLevelChange={handleLevelChange}
+        onSave={handleEditSave}
+        levelUpdating={levelUpdatingId === selectedEntryId}
+      />
     </article>
   )
 }

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useAuth } from '../../../hooks/useAuth.js'
 import { useSleepBox } from '../../../hooks/useSleepBox.js'
 import { natureOptions } from '../../../data/sleepData.js'
-import { evaluateSleepPokemon, getEntryIngredients, getEntrySubskills } from '../../../lib/sleepScoring.js'
+import { evaluateSleepPokemon } from '../../../lib/sleepScoring.js'
 
 const TIER_BADGE_CLASS = {
   S: 'bg-emerald-100 text-emerald-800',
@@ -30,12 +30,7 @@ export default function AnalyticsPanel() {
   const evaluation = useMemo(() => {
     if (!selectedEntry?.species) return null
     const nature = natureOptions.find((option) => option.name === selectedEntry.nature) ?? null
-    return evaluateSleepPokemon({
-      specialty: selectedEntry.species.specialty,
-      subskills: getEntrySubskills(selectedEntry),
-      ingredients: getEntryIngredients(selectedEntry),
-      naturePositiveStat: nature?.positive ?? null,
-    })
+    return evaluateSleepPokemon({ entry: selectedEntry, species: selectedEntry.species, nature })
   }, [selectedEntry])
 
   return (
@@ -72,6 +67,13 @@ export default function AnalyticsPanel() {
                   Tier {evaluation.tier}
                 </span>
               </div>
+              {evaluation.rpEfficiency != null && (
+                <p className="my-[0.1rem] text-gray-600 text-sm">
+                  <strong>Cálculo:</strong> 50% build ({evaluation.buildScore}%) + 50% eficiencia de RP (
+                  {evaluation.rpEfficiency}%: {evaluation.actualRp} RP real de un techo estimado de {evaluation.idealRp}{' '}
+                  para este nivel/Ribbon/Main Skill)
+                </p>
+              )}
               <p className="my-[0.1rem] text-gray-600 text-sm">
                 <strong>Especialidad:</strong> {evaluation.specialty}
               </p>

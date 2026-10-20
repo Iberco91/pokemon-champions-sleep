@@ -1,5 +1,7 @@
 -- Pokémon Champions & Sleep Toolkit — esquema de base de datos (Supabase / PostgreSQL)
--- Ejecutar esto en el SQL Editor de tu proyecto Supabase.
+-- Ejecutar esto en el SQL Editor de tu proyecto Supabase. Seguro de correr
+-- completo más de una vez (tablas, columnas y políticas usan "if not
+-- exists"/"drop if exists" antes de crear).
 
 -- =========================================================================
 -- Tablas de referencia compartidas (mismo contenido para todos los usuarios,
@@ -15,11 +17,25 @@ create table if not exists sleep_pokemon_species (
   berry_type varchar(30) not null,
   main_skill varchar(50) not null,
   base_carry_limit int not null,
-  base_frequency_seconds int not null
+  base_frequency_seconds int not null,
+  -- Añadidos para el cálculo real de RP (Fase 7): % base de ingrediente y de
+  -- activación de skill, y posición en la línea evolutiva (necesaria porque
+  -- el carry limit y la frecuencia reales dependen de cuántas evoluciones
+  -- tiene detrás/por delante, no solo de la especie en sí).
+  ingredient_percentage numeric(5,2),
+  skill_percentage numeric(5,2),
+  previous_evolutions int not null default 0,
+  remaining_evolutions int not null default 0
 );
+
+alter table sleep_pokemon_species add column if not exists ingredient_percentage numeric(5,2);
+alter table sleep_pokemon_species add column if not exists skill_percentage numeric(5,2);
+alter table sleep_pokemon_species add column if not exists previous_evolutions int not null default 0;
+alter table sleep_pokemon_species add column if not exists remaining_evolutions int not null default 0;
 
 alter table sleep_pokemon_species enable row level security;
 
+drop policy if exists "select_species_public" on sleep_pokemon_species;
 create policy "select_species_public"
   on sleep_pokemon_species for select
   using (true);
@@ -36,6 +52,7 @@ create table if not exists champions_meta_cache (
 
 alter table champions_meta_cache enable row level security;
 
+drop policy if exists "select_meta_public" on champions_meta_cache;
 create policy "select_meta_public"
   on champions_meta_cache for select
   using (true);
@@ -65,23 +82,52 @@ create table if not exists user_sleep_box (
   nature varchar(30),
   evaluation_score numeric(5,2),
   is_trained boolean not null default false,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  -- Añadidos para el cálculo real de Carry Limit y RP (Fase 7): nivel de
+  -- Ribbon (cinta de amistad, 0-4, otorga carry limit extra y en Pokémon no
+  -- evolucionados también más velocidad de ayuda) y nivel del Main Skill
+  -- (independiente del nivel del Pokémon, sube con Skill Candy).
+  ribbon_level int not null default 0 check (ribbon_level between 0 and 4),
+  skill_level int not null default 1
 );
+
+alter table user_sleep_box add column if not exists ribbon_level int not null default 0;
+alter table user_sleep_box add column if not exists skill_level int not null default 1;
+
+-- Si la tabla ya existía de antes del parche 3.6.0, todavía tiene las
+-- columnas viejas subskill_75/subskill_100 (create table if not exists no
+-- las toca) — se renombran para no perder datos ya cargados.
+do $$
+begin
+  if exists (select 1 from information_schema.columns where table_name = 'user_sleep_box' and column_name = 'subskill_75') then
+    alter table user_sleep_box rename column subskill_75 to subskill_70;
+  end if;
+  if exists (select 1 from information_schema.columns where table_name = 'user_sleep_box' and column_name = 'subskill_100') then
+    alter table user_sleep_box rename column subskill_100 to subskill_80;
+  end if;
+end $$;
+
+alter table user_sleep_box add column if not exists subskill_70 varchar(50);
+alter table user_sleep_box add column if not exists subskill_80 varchar(50);
 
 alter table user_sleep_box enable row level security;
 
+drop policy if exists "select_own_sleep_box" on user_sleep_box;
 create policy "select_own_sleep_box"
   on user_sleep_box for select
   using (auth.uid() = user_id);
 
+drop policy if exists "insert_own_sleep_box" on user_sleep_box;
 create policy "insert_own_sleep_box"
   on user_sleep_box for insert
   with check (auth.uid() = user_id);
 
+drop policy if exists "update_own_sleep_box" on user_sleep_box;
 create policy "update_own_sleep_box"
   on user_sleep_box for update
   using (auth.uid() = user_id);
 
+drop policy if exists "delete_own_sleep_box" on user_sleep_box;
 create policy "delete_own_sleep_box"
   on user_sleep_box for delete
   using (auth.uid() = user_id);
@@ -111,18 +157,22 @@ create table if not exists user_champions_box (
 
 alter table user_champions_box enable row level security;
 
+drop policy if exists "select_own_champions_box" on user_champions_box;
 create policy "select_own_champions_box"
   on user_champions_box for select
   using (auth.uid() = user_id);
 
+drop policy if exists "insert_own_champions_box" on user_champions_box;
 create policy "insert_own_champions_box"
   on user_champions_box for insert
   with check (auth.uid() = user_id);
 
+drop policy if exists "update_own_champions_box" on user_champions_box;
 create policy "update_own_champions_box"
   on user_champions_box for update
   using (auth.uid() = user_id);
 
+drop policy if exists "delete_own_champions_box" on user_champions_box;
 create policy "delete_own_champions_box"
   on user_champions_box for delete
   using (auth.uid() = user_id);

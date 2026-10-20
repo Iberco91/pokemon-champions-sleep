@@ -5,12 +5,12 @@
 
 import { getEvolutionFamily } from '../data/sleepData.js'
 import { computeCarryLimit, computeFrequencySeconds } from './sleepStats.js'
-import { evaluateSleepPokemon, getEntryIngredients, getEntrySubskills } from './sleepScoring.js'
+import { evaluateSleepPokemon } from './sleepScoring.js'
 
 const SECONDS_PER_HOUR = 3600
 
 // Proyecta una entry del box a un nivel objetivo: los sub-skills ya asignados
-// se activan según los tramos de nivel (10/25/50/75/100) que el nivel
+// se activan según los tramos de nivel (10/25/50/70/80) que el nivel
 // objetivo alcance, igual que en el box real una vez que el Pokémon suba de
 // nivel. El "throughput" (unidades recolectadas por hora) es la métrica de
 // rendimiento usada para decidir cuál ejemplar conviene más entrenar.
@@ -21,14 +21,7 @@ export function projectEntryAtLevel(entry, species, nature, targetLevel) {
   const helpsPerHour = frequencySeconds ? SECONDS_PER_HOUR / frequencySeconds : 0
   const throughputPerHour = carryLimit != null ? Math.round(carryLimit * helpsPerHour * 10) / 10 : null
 
-  const evaluation = species
-    ? evaluateSleepPokemon({
-        specialty: species.specialty,
-        subskills: getEntrySubskills(entry),
-        ingredients: getEntryIngredients(entry),
-        naturePositiveStat: nature?.positive ?? null,
-      })
-    : null
+  const evaluation = species ? evaluateSleepPokemon({ entry: projectedEntry, species, nature }) : null
 
   return { entry, species, targetLevel, carryLimit, frequencySeconds, helpsPerHour, throughputPerHour, evaluation }
 }

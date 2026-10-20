@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useAuth } from '../../../hooks/useAuth.js'
 import { useSleepBox } from '../../../hooks/useSleepBox.js'
-import { natureOptions } from '../../../data/sleepData.js'
+import { natureOptions, sleepLevels } from '../../../data/sleepData.js'
 import { findEvolutionFamilyInBox, projectEntryAtLevel, rankProjections } from '../../../lib/sleepComparator.js'
 import { formatFrequency } from '../../../lib/sleepStats.js'
 
@@ -74,8 +74,8 @@ export default function ComparatorPanel() {
             <div className="flex items-center gap-2">
               <input
                 type="number"
-                min="1"
-                max="100"
+                min={sleepLevels.min}
+                max={sleepLevels.max}
                 value={targetLevel}
                 onChange={(event) => setTargetLevel(event.target.value)}
                 className={`${selectClass} w-24`}
@@ -130,6 +130,8 @@ export default function ComparatorPanel() {
                   {projection.evaluation && (
                     <p className="my-[0.15rem] text-gray-600 text-sm">
                       <strong>Compatibilidad:</strong> {projection.evaluation.score}% (Tier {projection.evaluation.tier})
+                      {projection.evaluation.rpEfficiency != null &&
+                        ` · Eficiencia de RP: ${projection.evaluation.rpEfficiency}%`}
                     </p>
                   )}
                 </div>
