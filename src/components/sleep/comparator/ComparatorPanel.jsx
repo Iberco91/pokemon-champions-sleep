@@ -4,6 +4,7 @@ import { useSleepBox } from '../../../hooks/useSleepBox.js'
 import { natureOptions, sleepLevels } from '../../../data/sleepData.js'
 import { findEvolutionFamilyInBox, projectEntryAtLevel, rankProjections } from '../../../lib/sleepComparator.js'
 import { formatFrequency } from '../../../lib/sleepStats.js'
+import EvaluationBadges from '../EvaluationBadges.jsx'
 
 const selectClass = 'px-[0.7rem] py-[0.6rem] rounded-[0.65rem] border border-amber-200 bg-[#fffef9]'
 const labelClass = 'flex flex-col gap-[0.35rem] font-semibold text-[0.95rem] text-gray-600'
@@ -128,11 +129,14 @@ export default function ComparatorPanel() {
                     <strong>Producción estimada:</strong> {projection.throughputPerHour} unidades/hora
                   </p>
                   {projection.evaluation && (
-                    <p className="my-[0.15rem] text-gray-600 text-sm">
-                      <strong>Compatibilidad:</strong> {projection.evaluation.score}% (Tier {projection.evaluation.tier})
-                      {projection.evaluation.rpEfficiency != null &&
-                        ` · Eficiencia de RP: ${projection.evaluation.rpEfficiency}%`}
-                    </p>
+                    <div className="my-[0.3rem]">
+                      <EvaluationBadges evaluation={projection.evaluation} />
+                      {projection.evaluation.rpEfficiency != null && (
+                        <p className="m-0 mt-1 text-gray-600 text-sm">
+                          <strong>Eficiencia de RP:</strong> {projection.evaluation.rpEfficiency}%
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
               ))}

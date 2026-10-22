@@ -5,13 +5,7 @@ import { evaluateSleepPokemon } from '../../../lib/sleepScoring.js'
 import { natureOptions, sleepLevels, subskillLevels, subskillOptions } from '../../../data/sleepData.js'
 import { getIngredientQuantity, getIngredientSlotOptions } from '../../../data/sleepIngredientSlots.js'
 import { getMainSkillMaxLevel } from '../../../data/sleepRpTables.js'
-
-const TIER_BADGE_CLASS = {
-  S: 'bg-emerald-100 text-emerald-800',
-  A: 'bg-lime-100 text-lime-800',
-  B: 'bg-amber-100 text-amber-800',
-  C: 'bg-red-100 text-red-800',
-}
+import EvaluationBadges from '../EvaluationBadges.jsx'
 
 const detailLabelClass = 'text-xs font-bold uppercase tracking-wide text-amber-700'
 const detailValueClass = 'text-sm text-gray-800'
@@ -126,13 +120,8 @@ export default function PokemonDetailModal({ entry, onClose, onLevelChange, onSa
         </div>
 
         {evaluation && (
-          <div className="flex items-center gap-2 mb-4">
-            <span className={`px-2 py-[0.2rem] rounded-full text-xs font-bold ${TIER_BADGE_CLASS[evaluation.tier]}`}>
-              {evaluation.score}% · Tier {evaluation.tier}
-            </span>
-            {!evaluation.mandatoryMet && (
-              <span className="text-red-600 text-xs font-semibold">Falta Berry Finding S (obligatorio)</span>
-            )}
+          <div className="mb-4">
+            <EvaluationBadges evaluation={evaluation} />
           </div>
         )}
 

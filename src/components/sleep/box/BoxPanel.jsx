@@ -14,18 +14,12 @@ import { getMainSkillMaxLevel } from '../../../data/sleepRpTables.js'
 import { evaluateSleepPokemon } from '../../../lib/sleepScoring.js'
 import PokemonDetailModal from './PokemonDetailModal.jsx'
 import ConfirmDeleteButton from '../../shared/ConfirmDeleteButton.jsx'
+import EvaluationBadges from '../EvaluationBadges.jsx'
 
 // Horas de sueño acumulado requeridas por nivel de Good-Night Ribbon
 // (verificado 2026-09-03 contra Serebii/Game8): 200h, 500h, 1000h, 2000h.
 const RIBBON_HOURS = { 1: 200, 2: 500, 3: 1000, 4: 2000 }
 const ribbonOptions = [0, 1, 2, 3, 4]
-
-const TIER_BADGE_CLASS = {
-  S: 'bg-emerald-100 text-emerald-800',
-  A: 'bg-lime-100 text-lime-800',
-  B: 'bg-amber-100 text-amber-800',
-  C: 'bg-red-100 text-red-800',
-}
 
 const selectClass = 'px-[0.7rem] py-[0.6rem] rounded-[0.65rem] border border-amber-200 bg-[#fffef9]'
 const labelClass = 'flex flex-col gap-[0.35rem] font-semibold text-[0.95rem] text-gray-600'
@@ -401,15 +395,9 @@ export default function BoxPanel() {
             <strong>Frecuencia estimada:</strong> {formatFrequency(previewFrequency)}
           </p>
           {previewEvaluation && (
-            <p className="my-[0.2rem] text-gray-600 flex items-center gap-2">
-              <strong>Compatibilidad:</strong> {previewEvaluation.score}%
-              <span className={`px-2 py-[0.1rem] rounded-full text-xs font-bold ${TIER_BADGE_CLASS[previewEvaluation.tier]}`}>
-                Tier {previewEvaluation.tier}
-              </span>
-              {!previewEvaluation.mandatoryMet && (
-                <span className="text-red-600 text-xs font-semibold">Falta Berry Finding S (obligatorio)</span>
-              )}
-            </p>
+            <div className="my-[0.4rem]">
+              <EvaluationBadges evaluation={previewEvaluation} />
+            </div>
           )}
           {previewEvaluation?.rpEfficiency != null && (
             <p className="my-[0.2rem] text-gray-600 text-sm">

@@ -13,8 +13,14 @@
 // comunidad (ej. nitoyon/pokesleep-tool). El peso base ("build score") sigue
 // siendo un valor de referencia razonable — no hay una fórmula oficial
 // publicada para eso — igual que en sleepStats.js.
+//
+// Ese puntaje es la "calidad del ejemplar": compara al Pokémon contra su
+// propio techo, así que no dice nada de qué tan fuerte es su especie. Para eso
+// la evaluación trae aparte `speciesTier` (tier list de RaenonX, ver
+// sleepSpeciesTiers.js); los dos indicadores se muestran por separado.
 
 import { subskillLevels } from '../data/sleepData.js'
+import { getSpeciesTier } from '../data/sleepSpeciesTiers.js'
 import { getIngredientQuantity } from '../data/sleepIngredientSlots.js'
 import { ingredientValues } from '../data/sleepRecipes.js'
 import { computeRp, computeIdealRp } from './sleepRp.js'
@@ -211,6 +217,7 @@ export function evaluateSleepPokemon({ entry, species, nature }) {
     ingredientCombo: build.ingredientCombo,
     mandatoryMet: build.mandatoryMet,
     buildScore: build.score,
+    speciesTier: getSpeciesTier(species),
   }
 
   if (!build.mandatoryMet) {

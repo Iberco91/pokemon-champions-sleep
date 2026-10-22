@@ -3,13 +3,7 @@ import { useAuth } from '../../../hooks/useAuth.js'
 import { useSleepBox } from '../../../hooks/useSleepBox.js'
 import { natureOptions } from '../../../data/sleepData.js'
 import { evaluateSleepPokemon } from '../../../lib/sleepScoring.js'
-
-const TIER_BADGE_CLASS = {
-  S: 'bg-emerald-100 text-emerald-800',
-  A: 'bg-lime-100 text-lime-800',
-  B: 'bg-amber-100 text-amber-800',
-  C: 'bg-red-100 text-red-800',
-}
+import EvaluationBadges from '../EvaluationBadges.jsx'
 
 const selectClass = 'px-[0.7rem] py-[0.6rem] rounded-[0.65rem] border border-amber-200 bg-[#fffef9]'
 const labelClass = 'flex flex-col gap-[0.35rem] font-semibold text-[0.95rem] text-gray-600'
@@ -60,16 +54,18 @@ export default function AnalyticsPanel() {
 
           {evaluation && (
             <div className="mt-[0.3rem] p-[0.8rem] rounded-xl bg-orange-50 border border-orange-200 flex flex-col gap-[0.4rem]">
-              <div className="flex items-center gap-2">
-                <strong className="text-gray-700">Compatibilidad:</strong>
-                <span className="text-gray-900 font-bold">{evaluation.score}%</span>
-                <span className={`px-2 py-[0.1rem] rounded-full text-xs font-bold ${TIER_BADGE_CLASS[evaluation.tier]}`}>
-                  Tier {evaluation.tier}
-                </span>
-              </div>
+              <EvaluationBadges evaluation={evaluation} />
+              <p className="my-[0.1rem] text-gray-600 text-sm">
+                <strong>Tier de especie:</strong>{' '}
+                {evaluation.speciesTier
+                  ? `${evaluation.speciesTier.tier} en la tier list de RaenonX (${Math.round(
+                      evaluation.speciesTier.strength,
+                    ).toLocaleString('es-CL')} de fuerza diaria a nivel 60). Mide la especie, no este ejemplar.`
+                  : 'RaenonX no publica datos para esta especie.'}
+              </p>
               {evaluation.rpEfficiency != null && (
                 <p className="my-[0.1rem] text-gray-600 text-sm">
-                  <strong>Cálculo:</strong> 50% build ({evaluation.buildScore}%) + 50% eficiencia de RP (
+                  <strong>Calidad del ejemplar:</strong> 50% build ({evaluation.buildScore}%) + 50% eficiencia de RP (
                   {evaluation.rpEfficiency}%: {evaluation.actualRp} RP real de un techo estimado de {evaluation.idealRp}{' '}
                   para este nivel/Ribbon/Main Skill)
                 </p>
