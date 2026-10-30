@@ -55,8 +55,18 @@ export default function AnalyticsPanel() {
           {evaluation && (
             <div className="mt-[0.3rem] p-[0.8rem] rounded-xl bg-orange-50 border border-orange-200 flex flex-col gap-[0.4rem]">
               <EvaluationBadges evaluation={evaluation} />
+              {evaluation.supportTier && (
+                <p className="my-[0.1rem] text-gray-600 text-sm">
+                  <strong>Tier de support:</strong> {evaluation.supportTier.tier} ({evaluation.supportTier.score}%) = 70%
+                  especie entre supports ({evaluation.supportTier.speciesScore}%:{' '}
+                  {evaluation.supportTier.teamEnergy.toLocaleString('es-CL')} de energía diaria al equipo, vs. Gardevoir
+                  que es la mejor) + 30% ejemplar vs. ideal ({evaluation.supportTier.specimenScore}%: Skill Trigger M,
+                  Skill Level Up M, Helping Speed M, Skill Trigger S o Skill Level Up S, Berry Finding S y naturaleza +
+                  Main Skill Chance).
+                </p>
+              )}
               <p className="my-[0.1rem] text-gray-600 text-sm">
-                <strong>Tier de especie:</strong>{' '}
+                <strong>Tier de especie (RaenonX):</strong>{' '}
                 {evaluation.speciesTier
                   ? `${evaluation.speciesTier.tier} en la tier list de RaenonX (${Math.round(
                       evaluation.speciesTier.strength,

@@ -1,5 +1,6 @@
 // Muestra los dos indicadores de un Pokémon de Sleep por separado: la tier de
-// su especie (RaenonX, ver src/data/sleepSpeciesTiers.js) y la calidad del
+// su especie (RaenonX, ver src/data/sleepSpeciesTiers.js; en supports de
+// energía, la tier de support de sleepScoring.js) y la calidad del
 // ejemplar (% de sleepScoring.js). Se usa en el Box, la ficha, la evaluación
 // y el comparador para que todas las vistas digan lo mismo.
 
@@ -24,12 +25,19 @@ const badgeClass = 'px-2 py-[0.1rem] rounded-full text-xs font-bold'
 
 export default function EvaluationBadges({ evaluation }) {
   if (!evaluation) return null
-  const { speciesTier } = evaluation
+  const { speciesTier, supportTier } = evaluation
 
   return (
     <div className="flex flex-col gap-1">
       <div className="flex flex-wrap items-center gap-2">
-        {speciesTier ? (
+        {supportTier ? (
+          <span
+            className={`${badgeClass} ${SPECIES_TIER_BADGE_CLASS[supportTier.tier]}`}
+            title={`70% especie entre supports + 30% ejemplar vs. ideal = ${supportTier.score}%`}
+          >
+            Support: Tier {supportTier.tier}
+          </span>
+        ) : speciesTier ? (
           <span
             className={`${badgeClass} ${SPECIES_TIER_BADGE_CLASS[speciesTier.tier]}`}
             title={`Tier list de RaenonX: ${Math.round(speciesTier.strength).toLocaleString('es-CL')} de fuerza diaria a nivel 60`}
@@ -46,9 +54,9 @@ export default function EvaluationBadges({ evaluation }) {
           <span className="text-red-600 text-xs font-semibold">Falta Berry Finding S (obligatorio)</span>
         )}
       </div>
-      {speciesTier?.energySupport && (
+      {supportTier && (
         <p className="m-0 text-xs text-gray-500">
-          Soporte de energía: la tier de especie no cuenta la energía que entrega al equipo, así que subestima su valor.
+          Especie entre supports: {supportTier.speciesScore}% · Ejemplar vs. ideal: {supportTier.specimenScore}%
         </p>
       )}
     </div>

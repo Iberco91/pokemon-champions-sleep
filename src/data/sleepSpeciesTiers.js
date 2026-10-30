@@ -13,17 +13,14 @@
 // Mide fuerza propia de la especie, NO la calidad de un ejemplar concreto
 // (eso es lo que calcula sleepScoring.js). Tampoco cuenta la energía que una
 // skill de soporte entrega al equipo, porque la configuración asume energía
-// siempre al máximo — ver ENERGY_SUPPORT_SKILLS.
+// siempre al máximo; para esas especies la tier que se muestra es la de
+// support (sleepSupportTiers.js + sleepScoring.js).
 //
 // Pumpkaboo y Gourgeist "Medium Variety" no aparecen en la lista de RaenonX:
 // quedan sin tier. Pikachu/Eevee (Halloween) usan los valores de las
 // variantes "(Purple)"/"(Orange)", que es como RaenonX las nombra.
 
 export const SPECIES_TIERS = ['S', 'A', 'B', 'C', 'D', 'E', 'F']
-
-// Skills cuyo valor principal es recuperar energía del equipo, que la tier
-// list de RaenonX no mide con su configuración por defecto.
-export const ENERGY_SUPPORT_SKILLS = ['Energy for Everyone S', 'Energizing Cheer S']
 
 const speciesTierByName = {
   Caterpie: { strength: 13583.69, tier: 'E' },
@@ -269,5 +266,5 @@ const speciesTierByName = {
 export function getSpeciesTier(species) {
   const data = species?.name ? speciesTierByName[species.name] : null
   if (!data) return null
-  return { ...data, energySupport: ENERGY_SUPPORT_SKILLS.includes(species.main_skill) }
+  return data
 }

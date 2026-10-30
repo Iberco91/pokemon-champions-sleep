@@ -17,10 +17,13 @@
 // Ese puntaje es la "calidad del ejemplar": compara al Pokémon contra su
 // propio techo, así que no dice nada de qué tan fuerte es su especie. Para eso
 // la evaluación trae aparte `speciesTier` (tier list de RaenonX, ver
-// sleepSpeciesTiers.js); los dos indicadores se muestran por separado.
+// sleepSpeciesTiers.js); los dos indicadores se muestran por separado. Los
+// supports de energía traen además `supportTier` (ver más abajo), que
+// reemplaza a la tier de RaenonX en la interfaz.
 
 import { subskillLevels } from '../data/sleepData.js'
-import { getSpeciesTier } from '../data/sleepSpeciesTiers.js'
+import { getSpeciesTier, SPECIES_TIERS } from '../data/sleepSpeciesTiers.js'
+import { getSupportSpeciesScore, isEnergySupport } from '../data/sleepSupportTiers.js'
 import { getIngredientQuantity } from '../data/sleepIngredientSlots.js'
 import { ingredientValues } from '../data/sleepRecipes.js'
 import { computeRp, computeIdealRp } from './sleepRp.js'
@@ -149,6 +152,76 @@ function getIngredientCombo(ingredients) {
   return 'ABC'
 }
 
+// --- Tier de support -----------------------------------------------------
+//
+// Para especies con Energy for Everyone / Energizing Cheer, la tier de
+// RaenonX no sirve (no cuenta la energía que entregan al equipo). En su lugar
+// se calcula una tier de support por ejemplar, acordada con el usuario el
+// 2026-10-30:
+//   - 70%: la especie comparada con los otros supports (sleepSupportTiers.js)
+//   - 30%: el ejemplar comparado con el mismo Pokémon ideal (naturaleza +
+//     5 sub-skills perfectas)
+// El resultado (0-100) se corta en 7 tramos de igual ancho (S a F), el mismo
+// método de tramos que usa RaenonX.
+
+// Ejemplar ideal: Skill Trigger M + Skill Level Up M + Helping Speed M + una
+// sub-skill S de activación (Skill Trigger S o Skill Level Up S) + Berry
+// Finding S = 85 puntos, más naturaleza + Main Skill Chance (15) = 100.
+// Berry Finding S no ayuda como support, pero suma cuando la berry del
+// Pokémon es favorita de Snorlax esa semana (pedido del usuario). La segunda
+// sub-skill S de activación vale la mitad, para que el ideal sea con Berry
+// Finding S y no con dos sub-skills S de activación.
+const SUPPORT_SUBSKILL_POINTS = {
+  'Skill Trigger M': 22,
+  'Skill Level Up M': 22,
+  'Helping Speed M': 18,
+  'Skill Trigger S': 12,
+  'Skill Level Up S': 12,
+  'Berry Finding S': 11,
+  'Helping Speed S': 9,
+  'Helping Bonus': 9,
+}
+const SMALL_SKILL_BOOST_SUBSKILLS = ['Skill Trigger S', 'Skill Level Up S']
+const MAX_SUPPORT_SUBSKILL_POINTS = 85
+
+function getSupportNaturePoints(nature) {
+  if (nature?.positive === 'Main Skill Chance') return 15
+  if (nature?.positive === 'Helping Speed') return 10
+  if (nature?.negative === 'Main Skill Chance' || nature?.negative === 'Helping Speed') return 0
+  return 7
+}
+
+function computeSupportSpecimenScore(subskills, nature) {
+  let smallBoostsSeen = 0
+  const subskillPoints = subskills.reduce((sum, skill) => {
+    const points = SUPPORT_SUBSKILL_POINTS[skill] ?? 0
+    if (!SMALL_SKILL_BOOST_SUBSKILLS.includes(skill)) return sum + points
+    smallBoostsSeen += 1
+    return sum + (smallBoostsSeen === 1 ? points : points / 2)
+  }, 0)
+  return Math.round(Math.min(MAX_SUPPORT_SUBSKILL_POINTS, subskillPoints) + getSupportNaturePoints(nature))
+}
+
+function getSevenTier(score) {
+  const index = Math.min(6, Math.floor((100 - score) / (100 / 7)))
+  return SPECIES_TIERS[index]
+}
+
+function computeSupportTier(species, subskills, nature) {
+  if (!isEnergySupport(species)) return null
+  const speciesScore = getSupportSpeciesScore(species)
+  if (!speciesScore) return null
+  const specimenScore = computeSupportSpecimenScore(subskills, nature)
+  const score = Math.round(speciesScore.score * 0.7 + specimenScore * 0.3)
+  return {
+    tier: getSevenTier(score),
+    score,
+    speciesScore: speciesScore.score,
+    teamEnergy: speciesScore.teamEnergy,
+    specimenScore,
+  }
+}
+
 function getMatchedDesiredSubskills(subskills, desired) {
   return subskills.filter((skill) => desired.includes(skill))
 }
@@ -218,6 +291,7 @@ export function evaluateSleepPokemon({ entry, species, nature }) {
     mandatoryMet: build.mandatoryMet,
     buildScore: build.score,
     speciesTier: getSpeciesTier(species),
+    supportTier: computeSupportTier(species, subskills, nature),
   }
 
   if (!build.mandatoryMet) {
