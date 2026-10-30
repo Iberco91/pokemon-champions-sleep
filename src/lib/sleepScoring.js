@@ -29,8 +29,11 @@ import { ingredientValues } from '../data/sleepRecipes.js'
 import { computeRp, computeIdealRp } from './sleepRp.js'
 
 // "Helping Speed L" y "Skill Trigger L" no existen en el juego actual (ver
-// nota en sleepData.js sobre subskillOptions) — se reemplazan por "Skill
-// Level Up S/M", que suben directo el nivel del Main Skill.
+// nota en sleepData.js sobre subskillOptions).
+//
+// "Skill Level Up S/M" vale 0 en todos los puntajes (decisión del usuario
+// 2026-10-30): solo sube el nivel de la Main Skill, que igual se lleva al
+// máximo con Main Skill Seeds, y desde ahí la sub-skill no aporta nada.
 //
 // Puntos por sub-skill deseada (en vez de un valor plano por match): dentro
 // de cada familia S/M/(L) los puntos son proporcionales a la magnitud real
@@ -39,7 +42,6 @@ import { computeRp, computeIdealRp } from './sleepRp.js'
 //   - Helping Speed S/M: -7%/-14% frecuencia (sleepStats.js HELPING_SPEED_PERCENT) -> ratio 1:2
 //   - Ingredient Finder S/M: +18%/+36% chance (sleepRpTables.js INGREDIENT_FINDER_AMOUNTS) -> ratio 1:2
 //   - Skill Trigger S/M: +18%/+36% chance (sleepRpTables.js SKILL_TRIGGER_AMOUNTS) -> ratio 1:2
-//   - Skill Level Up S/M: +1/+2 niveles de Main Skill (Game8/TheGamer, verificado 2026-10-20) -> ratio 1:2
 //   - Inventory Up S/M/L: +6/+12/+18 Carry Limit (sleepStats.js INVENTORY_UP_BONUS) -> ratio 1:2:3
 // Las sub-skills de un solo tier (Helping Bonus) no tienen variante con la
 // que compararse, así que mantienen el valor plano que ya tenían.
@@ -57,8 +59,6 @@ const INGREDIENT_SUBSKILL_POINTS = {
 const SKILLS_SUBSKILL_POINTS = {
   'Skill Trigger S': 7,
   'Skill Trigger M': 13,
-  'Skill Level Up S': 7,
-  'Skill Level Up M': 13,
   'Helping Speed S': 7,
   'Helping Speed M': 13,
   'Helping Bonus': 10,
@@ -164,13 +164,13 @@ function getIngredientCombo(ingredients) {
 // El resultado (0-100) se corta en 7 tramos de igual ancho (S a F), el mismo
 // método de tramos que usa RaenonX.
 
-// Ejemplar ideal: Skill Trigger M + Skill Level Up M + Helping Speed M + una
-// sub-skill S de activación (Skill Trigger S o Skill Level Up S) + Berry
-// Finding S = 85 puntos, más naturaleza + Main Skill Chance (15) = 100.
-// Berry Finding S no ayuda como support, pero suma cuando la berry del
-// Pokémon es favorita de Snorlax esa semana (pedido del usuario). La segunda
-// sub-skill S de activación vale la mitad, para que el ideal sea con Berry
-// Finding S y no con dos sub-skills S de activación.
+// Ejemplar ideal: Skill Trigger M + Helping Speed M + Skill Trigger S + Berry
+// Finding S + una de Helping Bonus / Energy Recovery Bonus / Helping Speed S
+// = 85 puntos, más naturaleza + Main Skill Chance (15) = 100. Berry Finding S
+// no ayuda como support, pero suma cuando la berry del Pokémon es favorita de
+// Snorlax esa semana (pedido del usuario); vale 1 punto más que las de 11
+// para que sin ella el máximo sea 84 y el ideal la exija. Skill Level Up S/M
+// vale 0 (ver cabecera).
 //
 // Energy Recovery Bonus suma +14% a la energía que recupera TODO el equipo al
 // dormir (nerolis-lab: member-state.ts cuenta los miembros con ERB del
@@ -179,17 +179,14 @@ function getIngredientCombo(ingredients) {
 // Trigger M, que da más activaciones de la skill todos los días (acordado con
 // el usuario 2026-10-30).
 const SUPPORT_SUBSKILL_POINTS = {
-  'Skill Trigger M': 22,
-  'Skill Level Up M': 22,
-  'Helping Speed M': 18,
-  'Skill Trigger S': 12,
-  'Skill Level Up S': 12,
-  'Berry Finding S': 11,
-  'Helping Speed S': 9,
-  'Helping Bonus': 9,
-  'Energy Recovery Bonus': 9,
+  'Skill Trigger M': 26,
+  'Helping Speed M': 22,
+  'Skill Trigger S': 14,
+  'Berry Finding S': 12,
+  'Helping Speed S': 11,
+  'Helping Bonus': 11,
+  'Energy Recovery Bonus': 11,
 }
-const SMALL_SKILL_BOOST_SUBSKILLS = ['Skill Trigger S', 'Skill Level Up S']
 const MAX_SUPPORT_SUBSKILL_POINTS = 85
 
 function getSupportNaturePoints(nature) {
@@ -200,13 +197,7 @@ function getSupportNaturePoints(nature) {
 }
 
 function computeSupportSpecimenScore(subskills, nature) {
-  let smallBoostsSeen = 0
-  const subskillPoints = subskills.reduce((sum, skill) => {
-    const points = SUPPORT_SUBSKILL_POINTS[skill] ?? 0
-    if (!SMALL_SKILL_BOOST_SUBSKILLS.includes(skill)) return sum + points
-    smallBoostsSeen += 1
-    return sum + (smallBoostsSeen === 1 ? points : points / 2)
-  }, 0)
+  const subskillPoints = subskills.reduce((sum, skill) => sum + (SUPPORT_SUBSKILL_POINTS[skill] ?? 0), 0)
   return Math.round(Math.min(MAX_SUPPORT_SUBSKILL_POINTS, subskillPoints) + getSupportNaturePoints(nature))
 }
 

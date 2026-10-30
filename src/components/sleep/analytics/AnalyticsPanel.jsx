@@ -74,8 +74,8 @@ export default function AnalyticsPanel() {
                   especie entre supports ({evaluation.supportTier.speciesScore}%:{' '}
                   {evaluation.supportTier.teamEnergy.toLocaleString('es-CL')} de energía diaria al equipo, vs. Gardevoir
                   que es la mejor) + 30% ejemplar vs. ideal ({evaluation.supportTier.specimenScore}%: Skill Trigger M,
-                  Skill Level Up M, Helping Speed M, Skill Trigger S o Skill Level Up S, Berry Finding S y naturaleza +
-                  Main Skill Chance).
+                  Helping Speed M, Skill Trigger S, Berry Finding S, una de Helping Bonus / Energy Recovery Bonus /
+                  Helping Speed S y naturaleza + Main Skill Chance).
                 </p>
               )}
               <p className="my-[0.1rem] text-gray-600 text-sm">
