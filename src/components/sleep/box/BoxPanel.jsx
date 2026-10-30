@@ -15,6 +15,7 @@ import { evaluateSleepPokemon } from '../../../lib/sleepScoring.js'
 import PokemonDetailModal from './PokemonDetailModal.jsx'
 import ConfirmDeleteButton from '../../shared/ConfirmDeleteButton.jsx'
 import EvaluationBadges from '../EvaluationBadges.jsx'
+import ImprovementTips from '../ImprovementTips.jsx'
 
 // Horas de sueño acumulado requeridas por nivel de Good-Night Ribbon
 // (verificado 2026-09-03 contra Serebii/Game8): 200h, 500h, 1000h, 2000h.
@@ -395,8 +396,14 @@ export default function BoxPanel() {
             <strong>Frecuencia estimada:</strong> {formatFrequency(previewFrequency)}
           </p>
           {previewEvaluation && (
-            <div className="my-[0.4rem]">
+            <div className="my-[0.4rem] flex flex-col gap-2">
               <EvaluationBadges evaluation={previewEvaluation} />
+              <ImprovementTips
+                entry={normalizedForm}
+                species={selectedSpecies}
+                nature={selectedNature}
+                isSupport={Boolean(previewEvaluation.supportTier)}
+              />
             </div>
           )}
           {previewEvaluation?.rpEfficiency != null && (

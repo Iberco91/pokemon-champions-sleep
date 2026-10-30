@@ -235,9 +235,11 @@ function computeBuildScore(specialty, subskills, ingredients, natureOptimal, mat
     if (!mandatoryMet) return { score: 0, mandatoryMet: false, ingredientCombo: null }
     // Los 4 slots restantes (fuera de BFS) pueden cubrir las 3 sub-skills
     // deseadas restantes — techo 30 (igual que antes: 3 matches x 10), ahora
-    // repartido por tier real en vez de parejo.
+    // repartido por tier real en vez de parejo. Base 60 (antes 50, que dejaba
+    // el techo en 90 y ningún Pokémon de Berries podía llegar a 100%;
+    // corregido 2026-10-30).
     const subskillPoints = Math.min(30, sumSubskillPoints(specialty, matchedDesiredSubskills))
-    const score = Math.min(100, 50 + subskillPoints + (natureOptimal ? 10 : 0))
+    const score = Math.min(100, 60 + subskillPoints + (natureOptimal ? 10 : 0))
     return { score, mandatoryMet: true, ingredientCombo: null }
   }
 

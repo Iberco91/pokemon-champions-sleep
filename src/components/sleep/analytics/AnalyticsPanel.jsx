@@ -4,6 +4,7 @@ import { useSleepBox } from '../../../hooks/useSleepBox.js'
 import { natureOptions } from '../../../data/sleepData.js'
 import { evaluateSleepPokemon } from '../../../lib/sleepScoring.js'
 import EvaluationBadges from '../EvaluationBadges.jsx'
+import ImprovementTips from '../ImprovementTips.jsx'
 
 const selectClass = 'px-[0.7rem] py-[0.6rem] rounded-[0.65rem] border border-amber-200 bg-[#fffef9]'
 const labelClass = 'flex flex-col gap-[0.35rem] font-semibold text-[0.95rem] text-gray-600'
@@ -21,11 +22,15 @@ export default function AnalyticsPanel() {
     [box, selectedId],
   )
 
+  const selectedNature = useMemo(
+    () => natureOptions.find((option) => option.name === selectedEntry?.nature) ?? null,
+    [selectedEntry],
+  )
+
   const evaluation = useMemo(() => {
     if (!selectedEntry?.species) return null
-    const nature = natureOptions.find((option) => option.name === selectedEntry.nature) ?? null
-    return evaluateSleepPokemon({ entry: selectedEntry, species: selectedEntry.species, nature })
-  }, [selectedEntry])
+    return evaluateSleepPokemon({ entry: selectedEntry, species: selectedEntry.species, nature: selectedNature })
+  }, [selectedEntry, selectedNature])
 
   return (
     <article className="p-4 rounded-[0.9rem] bg-[#fffdf8] border border-amber-200">
@@ -55,6 +60,14 @@ export default function AnalyticsPanel() {
           {evaluation && (
             <div className="mt-[0.3rem] p-[0.8rem] rounded-xl bg-orange-50 border border-orange-200 flex flex-col gap-[0.4rem]">
               <EvaluationBadges evaluation={evaluation} />
+              <ImprovementTips
+                key={selectedEntry.id}
+                entry={selectedEntry}
+                species={selectedEntry.species}
+                nature={selectedNature}
+                isSupport={Boolean(evaluation.supportTier)}
+                defaultOpen
+              />
               {evaluation.supportTier && (
                 <p className="my-[0.1rem] text-gray-600 text-sm">
                   <strong>Tier de support:</strong> {evaluation.supportTier.tier} ({evaluation.supportTier.score}%) = 70%

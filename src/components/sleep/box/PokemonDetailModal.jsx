@@ -6,6 +6,7 @@ import { natureOptions, sleepLevels, subskillLevels, subskillOptions } from '../
 import { getIngredientQuantity, getIngredientSlotOptions } from '../../../data/sleepIngredientSlots.js'
 import { getMainSkillMaxLevel } from '../../../data/sleepRpTables.js'
 import EvaluationBadges from '../EvaluationBadges.jsx'
+import ImprovementTips from '../ImprovementTips.jsx'
 
 const detailLabelClass = 'text-xs font-bold uppercase tracking-wide text-amber-700'
 const detailValueClass = 'text-sm text-gray-800'
@@ -120,8 +121,16 @@ export default function PokemonDetailModal({ entry, onClose, onLevelChange, onSa
         </div>
 
         {evaluation && (
-          <div className="mb-4">
+          <div className="mb-4 flex flex-col gap-2">
             <EvaluationBadges evaluation={evaluation} />
+            {!editing && (
+              <ImprovementTips
+                entry={entry}
+                species={species}
+                nature={nature}
+                isSupport={Boolean(evaluation.supportTier)}
+              />
+            )}
           </div>
         )}
 
