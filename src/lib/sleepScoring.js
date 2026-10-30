@@ -171,6 +171,13 @@ function getIngredientCombo(ingredients) {
 // Pokémon es favorita de Snorlax esa semana (pedido del usuario). La segunda
 // sub-skill S de activación vale la mitad, para que el ideal sea con Berry
 // Finding S y no con dos sub-skills S de activación.
+//
+// Energy Recovery Bonus suma +14% a la energía que recupera TODO el equipo al
+// dormir (nerolis-lab: member-state.ts cuenta los miembros con ERB del
+// equipo), pero esa recuperación tiene tope de 100, así que no aporta si el
+// usuario duerme ~8,5 h. Por eso vale como Helping Bonus y menos que Skill
+// Trigger M, que da más activaciones de la skill todos los días (acordado con
+// el usuario 2026-10-30).
 const SUPPORT_SUBSKILL_POINTS = {
   'Skill Trigger M': 22,
   'Skill Level Up M': 22,
@@ -180,6 +187,7 @@ const SUPPORT_SUBSKILL_POINTS = {
   'Berry Finding S': 11,
   'Helping Speed S': 9,
   'Helping Bonus': 9,
+  'Energy Recovery Bonus': 9,
 }
 const SMALL_SKILL_BOOST_SUBSKILLS = ['Skill Trigger S', 'Skill Level Up S']
 const MAX_SUPPORT_SUBSKILL_POINTS = 85
