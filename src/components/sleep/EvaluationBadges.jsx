@@ -55,7 +55,7 @@ export default function EvaluationBadges({ evaluation }) {
             en el desglose de la evaluación. */}
         {supportTier ? (
           <span className={`${badgeClass} ${SPECIES_TIER_BADGE_CLASS[supportTier.tier]}`}>
-            Tier de support: {supportTier.score}%
+            Tier de support: {supportTier.score}% ({supportTier.tier})
           </span>
         ) : (
           <span className={`${badgeClass} ${QUALITY_BADGE_CLASS[evaluation.tier]}`}>
