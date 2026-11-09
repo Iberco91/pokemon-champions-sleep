@@ -4,7 +4,7 @@
 //
 // Usa el mismo evaluateSleepPokemon que muestra el porcentaje, así que las
 // sugerencias nunca contradicen al puntaje. El puntaje objetivo es la tier de
-// support (supportTier.score) en supports de energía y la calidad del
+// ejemplar del support (supportTier.specimenScore) en supports de energía y la calidad del
 // ejemplar (score) en el resto.
 //
 // Búsqueda: una pasada voraz (de a un cambio, cubre los ingredientes), luego
@@ -33,7 +33,7 @@ const FIELD_LABELS = {
 }
 
 function getTargetScore(evaluation) {
-  return evaluation.supportTier ? evaluation.supportTier.score : evaluation.score
+  return evaluation.supportTier ? evaluation.supportTier.specimenScore : evaluation.score
 }
 
 function scoreOf({ entry, nature }, species) {

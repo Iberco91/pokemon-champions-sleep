@@ -3,7 +3,8 @@
 // energía, la tier de support de sleepScoring.js) y la calidad del
 // ejemplar (% de sleepScoring.js). Se usa en el Box, la ficha, la evaluación
 // y el comparador para que todas las vistas digan lo mismo. En supports de
-// energía, el % de la tier de support reemplaza al de calidad del ejemplar.
+// energía se muestran la tier de la especie entre supports y el ejemplar
+// comparado con el mismo Pokémon ideal.
 
 const SPECIES_TIER_BADGE_CLASS = {
   S: 'bg-violet-100 text-violet-800',
@@ -35,10 +36,10 @@ export default function EvaluationBadges({ evaluation }) {
       <div className="flex flex-wrap items-center gap-2">
         {supportTier ? (
           <span
-            className={`${badgeClass} ${SPECIES_TIER_BADGE_CLASS[supportTier.tier]}`}
-            title={`70% especie entre supports + 30% ejemplar vs. ideal = ${supportTier.score}%`}
+            className={`${badgeClass} ${SPECIES_TIER_BADGE_CLASS[supportTier.speciesTier]}`}
+            title={`Especie entre supports: ${supportTier.speciesScore}% (${supportTier.teamEnergy.toLocaleString('es-CL')} de energía diaria al equipo, vs. Gardevoir que es la mejor)`}
           >
-            Support: Tier {supportTier.tier}
+            Support: Tier {supportTier.speciesTier}
           </span>
         ) : speciesTier ? (
           <span
@@ -50,12 +51,15 @@ export default function EvaluationBadges({ evaluation }) {
         ) : (
           <span className={`${badgeClass} bg-gray-100 text-gray-600`}>Especie: sin datos</span>
         )}
-        {/* En supports de energía el número principal es la tier de support
-            (pedido del usuario 2026-11-09); la calidad del ejemplar queda solo
-            en el desglose de la evaluación. */}
+        {/* En supports de energía, el segundo badge es el ejemplar comparado
+            con el mismo Pokémon ideal (pedido del usuario 2026-11-09); la
+            calidad del ejemplar general queda solo en el desglose. */}
         {supportTier ? (
-          <span className={`${badgeClass} ${SPECIES_TIER_BADGE_CLASS[supportTier.tier]}`}>
-            Tier de support: {supportTier.score}% ({supportTier.tier})
+          <span
+            className={`${badgeClass} ${QUALITY_BADGE_CLASS[supportTier.specimenTier]}`}
+            title="Comparado con el mismo Pokémon ideal: Skill Trigger M, Helping Speed M, Skill Trigger S, Berry Finding S, una de Helping Bonus / Energy Recovery Bonus / Helping Speed S y naturaleza + Main Skill Chance"
+          >
+            Ejemplar: {supportTier.specimenScore}% ({supportTier.specimenTier})
           </span>
         ) : (
           <span className={`${badgeClass} ${QUALITY_BADGE_CLASS[evaluation.tier]}`}>
@@ -68,7 +72,7 @@ export default function EvaluationBadges({ evaluation }) {
       </div>
       {supportTier && (
         <p className="m-0 text-xs text-gray-500">
-          Especie entre supports: {supportTier.speciesScore}% · Ejemplar vs. ideal: {supportTier.specimenScore}%
+          Especie entre supports: {supportTier.speciesScore}% de la energía que entrega Gardevoir, la mejor support
         </p>
       )}
     </div>

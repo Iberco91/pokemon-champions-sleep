@@ -70,12 +70,12 @@ export default function AnalyticsPanel() {
               />
               {evaluation.supportTier && (
                 <p className="my-[0.1rem] text-gray-600 text-sm">
-                  <strong>Tier de support:</strong> {evaluation.supportTier.tier} ({evaluation.supportTier.score}%) = 70%
-                  especie entre supports ({evaluation.supportTier.speciesScore}%:{' '}
-                  {evaluation.supportTier.teamEnergy.toLocaleString('es-CL')} de energía diaria al equipo, vs. Gardevoir
-                  que es la mejor) + 30% ejemplar vs. ideal ({evaluation.supportTier.specimenScore}%: Skill Trigger M,
-                  Helping Speed M, Skill Trigger S, Berry Finding S, una de Helping Bonus / Energy Recovery Bonus /
-                  Helping Speed S y naturaleza + Main Skill Chance).
+                  <strong>Support:</strong> Tier {evaluation.supportTier.speciesTier} (
+                  {evaluation.supportTier.speciesScore}%: {evaluation.supportTier.teamEnergy.toLocaleString('es-CL')} de
+                  energía diaria al equipo, vs. Gardevoir que es la mejor). <strong>Ejemplar:</strong>{' '}
+                  {evaluation.supportTier.specimenScore}% ({evaluation.supportTier.specimenTier}) comparado con el ideal:
+                  Skill Trigger M, Helping Speed M, Skill Trigger S, Berry Finding S, una de Helping Bonus / Energy
+                  Recovery Bonus / Helping Speed S y naturaleza + Main Skill Chance.
                 </p>
               )}
               <p className="my-[0.1rem] text-gray-600 text-sm">

@@ -31,7 +31,7 @@ function PlanDetails({ entry, species, nature, isSupport }) {
   const { plan } = result
   if (!plan) return null
 
-  const metricLabel = isSupport ? 'Tier de support' : 'Calidad del ejemplar'
+  const metricLabel = isSupport ? 'Ejemplar' : 'Calidad del ejemplar'
 
   if (plan.steps.length === 0) {
     return (
@@ -63,11 +63,10 @@ function PlanDetails({ entry, species, nature, isSupport }) {
           )
         })}
       </ol>
-      {plan.maxScore < 100 && (
+      {plan.maxScore < 100 && !isSupport && (
         <p className="m-0 text-xs text-gray-500">
-          {isSupport
-            ? 'No llega a 100% porque el 70% depende de la especie: con un ejemplar perfecto, el techo es su energía comparada con Gardevoir, la mejor support.'
-            : 'No llega a 100% porque la mitad del puntaje (eficiencia de RP) premia sub-skills algo distintas a las de su especialidad. El máximo alcanzable es el mejor equilibrio entre ambas.'}
+          No llega a 100% porque la mitad del puntaje (eficiencia de RP) premia sub-skills algo distintas a las de su
+          especialidad. El máximo alcanzable es el mejor equilibrio entre ambas.
         </p>
       )}
     </div>

@@ -175,14 +175,16 @@ function getIngredientCombo(ingredients) {
 //
 // Para especies con Energy for Everyone / Energizing Cheer, la tier de
 // RaenonX no sirve (no cuenta la energía que entregan al equipo). En su lugar
-// se calcula una tier de support por ejemplar, acordada con el usuario el
-// 2026-10-30:
-//   - 70%: la especie comparada con los otros supports (sleepSupportTiers.js)
-//   - 30%: el ejemplar comparado con el mismo Pokémon ideal (naturaleza +
-//     5 sub-skills perfectas)
-// La letra del resultado (0-100) usa la misma escala que la calidad del
-// ejemplar (getTier: S 90+, A 80+, B 70+, C 60+, D 50+, E bajo 50), para que
-// las letras signifiquen lo mismo en todas partes (usuario 2026-11-09).
+// se muestran dos indicadores separados, igual que en el resto de los
+// Pokémon (especie / ejemplar; usuario 2026-11-09, antes era una mezcla
+// 70/30 de ambos):
+//   - Especie: la especie comparada con los otros supports
+//     (sleepSupportTiers.js), `speciesScore` / `speciesTier`.
+//   - Ejemplar: el ejemplar comparado con el mismo Pokémon ideal (naturaleza
+//     + 5 sub-skills perfectas), `specimenScore` / `specimenTier`.
+// Las letras usan la misma escala que la calidad del ejemplar (getTier: S
+// 90+, A 80+, B 70+, C 60+, D 50+, E bajo 50), para que signifiquen lo mismo
+// en todas partes.
 
 // Ejemplar ideal: Skill Trigger M + Helping Speed M + Skill Trigger S + Berry
 // Finding S + una de Helping Bonus / Energy Recovery Bonus / Helping Speed S
@@ -226,19 +228,17 @@ function computeSupportSpecimenScore(subskills, nature) {
   return Math.round(Math.min(MAX_SUPPORT_SUBSKILL_POINTS, subskillPoints) + getSupportNaturePoints(nature))
 }
 
-
 function computeSupportTier(species, subskills, nature) {
   if (!isEnergySupport(species)) return null
   const speciesScore = getSupportSpeciesScore(species)
   if (!speciesScore) return null
   const specimenScore = computeSupportSpecimenScore(subskills, nature)
-  const score = Math.round(speciesScore.score * 0.7 + specimenScore * 0.3)
   return {
-    tier: getTier(score),
-    score,
     speciesScore: speciesScore.score,
+    speciesTier: getTier(speciesScore.score),
     teamEnergy: speciesScore.teamEnergy,
     specimenScore,
+    specimenTier: getTier(specimenScore),
   }
 }
 
