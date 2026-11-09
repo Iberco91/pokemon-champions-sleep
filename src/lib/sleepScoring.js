@@ -300,13 +300,31 @@ export function evaluateSleepPokemon({ entry, species, nature }) {
   }
 
   const actualRp = species ? computeRp(entry, species, nature) : null
+  const scoredRp = species ? computeRp(withoutNonScoringSubskills(entry), species, nature) : null
   const idealRp = species ? computeIdealRp(entry, species) : null
   const rpEfficiency =
-    actualRp != null && idealRp ? Math.max(0, Math.min(100, Math.round((actualRp / idealRp) * 100))) : null
+    scoredRp != null && idealRp ? Math.max(0, Math.min(100, Math.round((scoredRp / idealRp) * 100))) : null
 
   const score = rpEfficiency != null ? Math.round(build.score * 0.5 + rpEfficiency * 0.5) : build.score
 
-  return { ...baseResult, score, tier: getTier(score), rpEfficiency, actualRp, idealRp }
+  return { ...baseResult, score, tier: getTier(score), rpEfficiency, actualRp, scoredRp, idealRp }
+}
+
+// Dream Shard Bonus multiplica el RP real del juego (+22,1%, igual que Helping
+// Bonus), pero solo da Dream Shards: no aporta calorías a Snorlax. Por decisión
+// del usuario (2026-11-09) nunca suma en el puntaje, así que la eficiencia de
+// RP se calcula como si ese slot estuviera vacío. Sin esto, en un Pokémon que
+// no es de Berries, Dream Shard Bonus subía más el RP que Berry Finding S y
+// "¿Qué le falta?" sugería cambiar Berry Finding S por Dream Shard Bonus. El
+// RP real (actualRp) se sigue mostrando tal cual lo calcula el juego.
+const NON_SCORING_RP_SUBSKILLS = ['Dream Shard Bonus']
+
+function withoutNonScoringSubskills(entry) {
+  const cleaned = { ...entry }
+  for (const level of subskillLevels) {
+    if (NON_SCORING_RP_SUBSKILLS.includes(cleaned[`subskill_${level}`])) cleaned[`subskill_${level}`] = null
+  }
+  return cleaned
 }
 
 // Helpers para armar el input de evaluateSleepPokemon a partir de una entry
