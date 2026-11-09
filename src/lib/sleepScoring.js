@@ -76,6 +76,20 @@ const DESIRED_SUBSKILLS_BY_SPECIALTY = {
   Skills: Object.keys(SKILLS_SUBSKILL_POINTS),
 }
 
+// Berry Finding S fuera de Berries (pedido del usuario 2026-11-09): no es
+// deseada ni óptima, pero suma algo porque da 1 berry más por recolección.
+// Vale menos que cualquier deseada de la especialidad, así que nunca entra
+// en el ejemplar ideal ni aparece como mejora sobre una deseada.
+const SECONDARY_SUBSKILL_POINTS_BY_SPECIALTY = {
+  Ingredients: { 'Berry Finding S': 2 },
+  Skills: { 'Berry Finding S': 4 },
+}
+
+function sumSecondarySubskillPoints(specialty, subskills) {
+  const pointsMap = SECONDARY_SUBSKILL_POINTS_BY_SPECIALTY[specialty] ?? {}
+  return subskills.reduce((sum, skill) => sum + (pointsMap[skill] ?? 0), 0)
+}
+
 // Suma los puntos reales de las sub-skills deseadas presentes, en vez de
 // contarlas parejo — así una Pokémon con Helping Speed M puntúa más que uno
 // con Helping Speed S, aunque ambos "cuenten como match".
@@ -258,7 +272,10 @@ function computeBuildScore(specialty, subskills, ingredients, natureOptimal, mat
       ingredientCombo === 'ABA'
         ? getTwoUniqueIngredientScore(ingredients, speciesName)
         : INGREDIENT_COMBO_SCORE[ingredientCombo]
-    const subskillPoints = Math.min(30, sumSubskillPoints(specialty, matchedDesiredSubskills))
+    const subskillPoints = Math.min(
+      30,
+      sumSubskillPoints(specialty, matchedDesiredSubskills) + sumSecondarySubskillPoints(specialty, subskills),
+    )
     const score = Math.min(100, Math.round(comboScore * 0.6 + subskillPoints + (natureOptimal ? 10 : 0)))
     return { score, mandatoryMet: true, ingredientCombo }
   }
@@ -267,7 +284,10 @@ function computeBuildScore(specialty, subskills, ingredients, natureOptimal, mat
     // "Sin filtro estricto, pero prioriza activación": base más baja que
     // Berries/Ingredients porque no hay criterio obligatorio que garantice
     // un piso de calidad.
-    const subskillPoints = Math.min(50, sumSubskillPoints(specialty, matchedDesiredSubskills))
+    const subskillPoints = Math.min(
+      50,
+      sumSubskillPoints(specialty, matchedDesiredSubskills) + sumSecondarySubskillPoints(specialty, subskills),
+    )
     const score = Math.min(100, 40 + subskillPoints + (natureOptimal ? 10 : 0))
     return { score, mandatoryMet: true, ingredientCombo: null }
   }
