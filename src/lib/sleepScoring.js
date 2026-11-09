@@ -26,7 +26,7 @@ import { getSpeciesTier, SPECIES_TIERS } from '../data/sleepSpeciesTiers.js'
 import { getSupportSpeciesScore, isEnergySupport } from '../data/sleepSupportTiers.js'
 import { getIngredientQuantity } from '../data/sleepIngredientSlots.js'
 import { ingredientValues } from '../data/sleepRecipes.js'
-import { computeRp, computeIdealRp } from './sleepRp.js'
+import { computeRp, computeIdealRp, RP_SUBSKILL_CANDIDATES } from './sleepRp.js'
 
 // "Helping Speed L" y "Skill Trigger L" no existen en el juego actual (ver
 // nota en sleepData.js sobre subskillOptions).
@@ -334,6 +334,23 @@ function withoutNonScoringSubskills(entry) {
     if (NON_SCORING_RP_SUBSKILLS.includes(cleaned[`subskill_${level}`])) cleaned[`subskill_${level}`] = null
   }
   return cleaned
+}
+
+// Sub-skills que pueden subir el puntaje de esta especie (el resto vale 0 en
+// todos los términos). Las usa sleepImprovements.js para acotar la búsqueda
+// exhaustiva: build de la especialidad, Berry Finding S (obligatoria en
+// Berries), las que suben el RP que puntúa y, en supports, las de su tier.
+export function getScoringSubskills(species) {
+  const support = isEnergySupport(species)
+  const pool = new Set([
+    ...Object.keys(SUBSKILL_POINTS_BY_SPECIALTY[species?.specialty] ?? {}),
+    MANDATORY_BERRY_SUBSKILL,
+    ...RP_SUBSKILL_CANDIDATES,
+    'Energy Recovery Bonus',
+    ...(support ? Object.keys(SUPPORT_SUBSKILL_POINTS) : []),
+  ])
+  if (!support) NON_SCORING_RP_SUBSKILLS.forEach((skill) => pool.delete(skill))
+  return [...pool]
 }
 
 // Helpers para armar el input de evaluateSleepPokemon a partir de una entry

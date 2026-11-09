@@ -145,7 +145,7 @@ export function computeRp(entry, species, nature) {
 // (no tienen ningún término en la fórmula de RP — el nivel de Main Skill se
 // toma directo de entry.skill_level). Mantenerlas fuera reduce el espacio de
 // búsqueda sin cambiar el resultado óptimo.
-const RP_SUBSKILL_CANDIDATES = [
+export const RP_SUBSKILL_CANDIDATES = [
   'Berry Finding S',
   'Helping Speed S',
   'Helping Speed M',

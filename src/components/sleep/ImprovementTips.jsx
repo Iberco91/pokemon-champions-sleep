@@ -3,7 +3,7 @@
 // src/lib/sleepImprovements.js). Plegable para que la búsqueda solo corra al
 // abrirlo.
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { natureOptions } from '../../data/sleepData.js'
 import { computeImprovementPlan } from '../../lib/sleepImprovements.js'
 
@@ -15,7 +15,20 @@ function formatValue(field, value) {
 }
 
 function PlanDetails({ entry, species, nature, isSupport }) {
-  const plan = useMemo(() => computeImprovementPlan({ entry, species, nature }), [entry, species, nature])
+  // La búsqueda exhaustiva puede tardar 1-2 s (especialistas en Ingredientes
+  // y supports): se corre después de pintar "Calculando..." para no congelar
+  // la página.
+  const [result, setResult] = useState(null)
+  const inputs = useMemo(() => ({ entry, species, nature }), [entry, species, nature])
+  useEffect(() => {
+    const timer = setTimeout(() => setResult({ inputs, plan: computeImprovementPlan(inputs) }), 30)
+    return () => clearTimeout(timer)
+  }, [inputs])
+
+  if (!result || result.inputs !== inputs) {
+    return <p className="m-0 text-sm text-gray-500">Calculando la mejor combinación...</p>
+  }
+  const { plan } = result
   if (!plan) return null
 
   const metricLabel = isSupport ? 'Tier de support' : 'Calidad del ejemplar'
@@ -40,6 +53,9 @@ function PlanDetails({ entry, species, nature, isSupport }) {
             <li key={step.field}>
               <strong>{step.label}:</strong> {formatValue(step.field, step.from)} →{' '}
               <span className="font-semibold text-emerald-700">{formatValue(step.field, step.to)}</span>{' '}
+              {step.movedFrom && (
+                <span className="text-gray-500">(la que tenía en {step.movedFrom.replace('Sub-skill ', '')}) </span>
+              )}
               <span className="text-gray-500">
                 ({step.scoreAfter > previousScore ? 'sube a' : 'mantiene'} {step.scoreAfter}%)
               </span>
