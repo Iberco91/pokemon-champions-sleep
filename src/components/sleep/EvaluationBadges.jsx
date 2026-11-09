@@ -39,7 +39,7 @@ export default function EvaluationBadges({ evaluation }) {
             className={`${badgeClass} ${SPECIES_TIER_BADGE_CLASS[supportTier.speciesTier]}`}
             title={`Especie entre supports: ${supportTier.speciesScore}% (${supportTier.teamEnergy.toLocaleString('es-CL')} de energía diaria al equipo, vs. Gardevoir que es la mejor)`}
           >
-            Support: Tier {supportTier.speciesTier}
+            Support: Tier {supportTier.speciesTier} ({supportTier.speciesScore}%)
           </span>
         ) : speciesTier ? (
           <span
