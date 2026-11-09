@@ -132,15 +132,20 @@ function getTwoUniqueIngredientScore(ingredients, speciesName) {
   return Math.round(40 + repeatedShare * 60)
 }
 
+// Letra de la calidad del ejemplar (escala definida por el usuario
+// 2026-11-09): S 90-100, A 80-89, B 70-79, C 60-69, D 50-59, E bajo 50.
 const TIER_THRESHOLDS = [
   { tier: 'S', minScore: 90 },
-  { tier: 'A', minScore: 75 },
-  { tier: 'B', minScore: 50 },
+  { tier: 'A', minScore: 80 },
+  { tier: 'B', minScore: 70 },
+  { tier: 'C', minScore: 60 },
+  { tier: 'D', minScore: 50 },
 ]
+const LOWEST_TIER = 'E'
 
 function getTier(score) {
   const match = TIER_THRESHOLDS.find((entry) => score >= entry.minScore)
-  return match?.tier ?? 'C'
+  return match?.tier ?? LOWEST_TIER
 }
 
 function getIngredientCombo(ingredients) {
@@ -301,7 +306,7 @@ export function evaluateSleepPokemon({ entry, species, nature }) {
   }
 
   if (!build.mandatoryMet) {
-    return { ...baseResult, score: 0, tier: 'C', rpEfficiency: null, actualRp: null, idealRp: null }
+    return { ...baseResult, score: 0, tier: LOWEST_TIER, rpEfficiency: null, actualRp: null, idealRp: null }
   }
 
   const actualRp = species ? computeRp(entry, species, nature) : null

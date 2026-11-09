@@ -18,8 +18,10 @@ const SPECIES_TIER_BADGE_CLASS = {
 const QUALITY_BADGE_CLASS = {
   S: 'bg-emerald-100 text-emerald-800',
   A: 'bg-lime-100 text-lime-800',
-  B: 'bg-amber-100 text-amber-800',
-  C: 'bg-red-100 text-red-800',
+  B: 'bg-yellow-100 text-yellow-800',
+  C: 'bg-amber-100 text-amber-800',
+  D: 'bg-orange-100 text-orange-800',
+  E: 'bg-red-100 text-red-800',
 }
 
 const badgeClass = 'px-2 py-[0.1rem] rounded-full text-xs font-bold'
