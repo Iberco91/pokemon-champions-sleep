@@ -59,11 +59,11 @@ export default function EvaluationBadges({ evaluation }) {
             className={`${badgeClass} ${QUALITY_BADGE_CLASS[supportTier.specimenTier]}`}
             title="Comparado con el mismo Pokémon ideal: Skill Trigger M, Helping Speed M, Skill Trigger S, Berry Finding S, una de Helping Bonus / Energy Recovery Bonus / Helping Speed S y naturaleza + Main Skill Chance"
           >
-            Ejemplar: {supportTier.specimenScore}% ({supportTier.specimenTier})
+            Ejemplar: {supportTier.specimenTier} ({supportTier.specimenScore}%)
           </span>
         ) : (
           <span className={`${badgeClass} ${QUALITY_BADGE_CLASS[evaluation.tier]}`}>
-            Calidad del ejemplar: {evaluation.score}% ({evaluation.tier})
+            Calidad del ejemplar: {evaluation.tier} ({evaluation.score}%)
           </span>
         )}
         {!evaluation.mandatoryMet && (
