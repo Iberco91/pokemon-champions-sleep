@@ -22,7 +22,7 @@
 // reemplaza a la tier de RaenonX en la interfaz.
 
 import { subskillLevels } from '../data/sleepData.js'
-import { getSpeciesTier, SPECIES_TIERS } from '../data/sleepSpeciesTiers.js'
+import { getSpeciesTier } from '../data/sleepSpeciesTiers.js'
 import { getSupportSpeciesScore, isEnergySupport } from '../data/sleepSupportTiers.js'
 import { getIngredientQuantity } from '../data/sleepIngredientSlots.js'
 import { ingredientValues } from '../data/sleepRecipes.js'
@@ -180,8 +180,9 @@ function getIngredientCombo(ingredients) {
 //   - 70%: la especie comparada con los otros supports (sleepSupportTiers.js)
 //   - 30%: el ejemplar comparado con el mismo Pokémon ideal (naturaleza +
 //     5 sub-skills perfectas)
-// El resultado (0-100) se corta en 7 tramos de igual ancho (S a F), el mismo
-// método de tramos que usa RaenonX.
+// La letra del resultado (0-100) usa la misma escala que la calidad del
+// ejemplar (getTier: S 90+, A 80+, B 70+, C 60+, D 50+, E bajo 50), para que
+// las letras signifiquen lo mismo en todas partes (usuario 2026-11-09).
 
 // Ejemplar ideal: Skill Trigger M + Helping Speed M + Skill Trigger S + Berry
 // Finding S + una de Helping Bonus / Energy Recovery Bonus / Helping Speed S
@@ -225,10 +226,6 @@ function computeSupportSpecimenScore(subskills, nature) {
   return Math.round(Math.min(MAX_SUPPORT_SUBSKILL_POINTS, subskillPoints) + getSupportNaturePoints(nature))
 }
 
-function getSevenTier(score) {
-  const index = Math.min(6, Math.floor((100 - score) / (100 / 7)))
-  return SPECIES_TIERS[index]
-}
 
 function computeSupportTier(species, subskills, nature) {
   if (!isEnergySupport(species)) return null
@@ -237,7 +234,7 @@ function computeSupportTier(species, subskills, nature) {
   const specimenScore = computeSupportSpecimenScore(subskills, nature)
   const score = Math.round(speciesScore.score * 0.7 + specimenScore * 0.3)
   return {
-    tier: getSevenTier(score),
+    tier: getTier(score),
     score,
     speciesScore: speciesScore.score,
     teamEnergy: speciesScore.teamEnergy,
