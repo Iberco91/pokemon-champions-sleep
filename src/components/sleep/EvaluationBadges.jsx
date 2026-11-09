@@ -2,7 +2,8 @@
 // su especie (RaenonX, ver src/data/sleepSpeciesTiers.js; en supports de
 // energía, la tier de support de sleepScoring.js) y la calidad del
 // ejemplar (% de sleepScoring.js). Se usa en el Box, la ficha, la evaluación
-// y el comparador para que todas las vistas digan lo mismo.
+// y el comparador para que todas las vistas digan lo mismo. En supports de
+// energía, el % de la tier de support reemplaza al de calidad del ejemplar.
 
 const SPECIES_TIER_BADGE_CLASS = {
   S: 'bg-violet-100 text-violet-800',
@@ -47,9 +48,18 @@ export default function EvaluationBadges({ evaluation }) {
         ) : (
           <span className={`${badgeClass} bg-gray-100 text-gray-600`}>Especie: sin datos</span>
         )}
-        <span className={`${badgeClass} ${QUALITY_BADGE_CLASS[evaluation.tier]}`}>
-          Calidad del ejemplar: {evaluation.score}%
-        </span>
+        {/* En supports de energía el número principal es la tier de support
+            (pedido del usuario 2026-11-09); la calidad del ejemplar queda solo
+            en el desglose de la evaluación. */}
+        {supportTier ? (
+          <span className={`${badgeClass} ${SPECIES_TIER_BADGE_CLASS[supportTier.tier]}`}>
+            Tier de support: {supportTier.score}%
+          </span>
+        ) : (
+          <span className={`${badgeClass} ${QUALITY_BADGE_CLASS[evaluation.tier]}`}>
+            Calidad del ejemplar: {evaluation.score}%
+          </span>
+        )}
         {!evaluation.mandatoryMet && (
           <span className="text-red-600 text-xs font-semibold">Falta Berry Finding S (obligatorio)</span>
         )}
