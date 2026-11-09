@@ -91,7 +91,7 @@ export default function AnalyticsPanel() {
                   <strong>Calidad del ejemplar:</strong> 50% build ({evaluation.buildScore}%) + 50% eficiencia de RP (
                   {evaluation.rpEfficiency}%:{' '}
                   {evaluation.scoredRp !== evaluation.actualRp
-                    ? `${evaluation.scoredRp} RP sin contar Dream Shard Bonus (real: ${evaluation.actualRp})`
+                    ? `${evaluation.scoredRp} RP sin contar sub-skills que no dan calorías (real: ${evaluation.actualRp})`
                     : `${evaluation.actualRp} RP real`}{' '}
                   de un techo estimado de {evaluation.idealRp} para este nivel/Ribbon/Main Skill)
                 </p>

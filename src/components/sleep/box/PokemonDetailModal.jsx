@@ -341,7 +341,7 @@ export default function PokemonDetailModal({ entry, onClose, onLevelChange, onSa
                   <span className="text-gray-500">
                     {' '}
                     ({evaluation.rpEfficiency}% de su techo estimado de {evaluation.idealRp} en este nivel/Ribbon/Main
-                    Skill{evaluation.scoredRp !== evaluation.actualRp && ', sin contar Dream Shard Bonus'})
+                    Skill{evaluation.scoredRp !== evaluation.actualRp && ', sin contar sub-skills que no dan calorías'})
                   </span>
                 )}
               </p>

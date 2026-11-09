@@ -154,8 +154,12 @@ const RP_SUBSKILL_CANDIDATES = [
   'Skill Trigger S',
   'Skill Trigger M',
   'Helping Bonus',
-  'Sleep EXP Bonus',
 ]
+// "Sleep EXP Bonus" (y Dream Shard / Research EXP Bonus) también suben el RP
+// real, pero no cuentan en el puntaje (decisión del usuario 2026-11-09, ver
+// sleepScoring.js#NON_SCORING_RP_SUBSKILLS), así que quedan fuera del techo:
+// si no, el techo exigiría una sub-skill que el puntaje no premia. Su factor
+// es el mismo que Helping Bonus, así que el techo no baja por esto.
 
 function* combinations(items, size) {
   if (size === 0) {

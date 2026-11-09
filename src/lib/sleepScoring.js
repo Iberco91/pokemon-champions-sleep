@@ -186,6 +186,11 @@ const SUPPORT_SUBSKILL_POINTS = {
   'Helping Speed S': 11,
   'Helping Bonus': 11,
   'Energy Recovery Bonus': 11,
+  // Solo suman en supports (decisión del usuario 2026-11-09): poco, para que
+  // nunca reemplacen a las de arriba en el ejemplar ideal.
+  'Dream Shard Bonus': 5,
+  'Sleep EXP Bonus': 5,
+  'Research EXP Bonus': 5,
 }
 const MAX_SUPPORT_SUBSKILL_POINTS = 85
 
@@ -300,7 +305,9 @@ export function evaluateSleepPokemon({ entry, species, nature }) {
   }
 
   const actualRp = species ? computeRp(entry, species, nature) : null
-  const scoredRp = species ? computeRp(withoutNonScoringSubskills(entry), species, nature) : null
+  const scoredRp = species
+    ? computeRp(baseResult.supportTier ? entry : withoutNonScoringSubskills(entry), species, nature)
+    : null
   const idealRp = species ? computeIdealRp(entry, species) : null
   const rpEfficiency =
     scoredRp != null && idealRp ? Math.max(0, Math.min(100, Math.round((scoredRp / idealRp) * 100))) : null
@@ -310,14 +317,16 @@ export function evaluateSleepPokemon({ entry, species, nature }) {
   return { ...baseResult, score, tier: getTier(score), rpEfficiency, actualRp, scoredRp, idealRp }
 }
 
-// Dream Shard Bonus multiplica el RP real del juego (+22,1%, igual que Helping
-// Bonus), pero solo da Dream Shards: no aporta calorías a Snorlax. Por decisión
-// del usuario (2026-11-09) nunca suma en el puntaje, así que la eficiencia de
-// RP se calcula como si ese slot estuviera vacío. Sin esto, en un Pokémon que
-// no es de Berries, Dream Shard Bonus subía más el RP que Berry Finding S y
-// "¿Qué le falta?" sugería cambiar Berry Finding S por Dream Shard Bonus. El
-// RP real (actualRp) se sigue mostrando tal cual lo calcula el juego.
-const NON_SCORING_RP_SUBSKILLS = ['Dream Shard Bonus']
+// Dream Shard Bonus, Sleep EXP Bonus y Research EXP Bonus multiplican el RP
+// real del juego (+22,1%, igual que Helping Bonus), pero no aportan calorías a
+// Snorlax. Por decisión del usuario (2026-11-09) no suman en el puntaje salvo
+// en supports de energía (que valen por su tier de support, donde sí tienen
+// algunos puntos), así que fuera de los supports la eficiencia de RP se
+// calcula como si esos slots estuvieran vacíos. Sin esto, en un Pokémon que no
+// es de Berries, Dream Shard Bonus subía más el RP que Berry Finding S y "¿Qué
+// le falta?" sugería cambiar Berry Finding S por Dream Shard Bonus. El RP real
+// (actualRp) se sigue mostrando tal cual lo calcula el juego.
+const NON_SCORING_RP_SUBSKILLS = ['Dream Shard Bonus', 'Sleep EXP Bonus', 'Research EXP Bonus']
 
 function withoutNonScoringSubskills(entry) {
   const cleaned = { ...entry }
