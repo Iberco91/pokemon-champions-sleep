@@ -261,10 +261,16 @@ const speciesTierByName = {
   Pawmot: { strength: 13620.42, tier: 'E' },
 }
 
-// Devuelve { tier, strength, energySupport } para una especie, o null si
-// RaenonX no la publica.
+// `percent`: fuerza de la especie como % de la más fuerte de nuestra Pokédex
+// (Heracross), igual que la tier de support se compara contra Gardevoir.
+// Sirve para distinguir dos especies con la misma letra (pedido del usuario
+// 2026-11-09). La letra sigue siendo la de RaenonX.
+const MAX_STRENGTH = Math.max(...Object.values(speciesTierByName).map((data) => data.strength))
+
+// Devuelve { tier, strength, percent } para una especie, o null si RaenonX no
+// la publica.
 export function getSpeciesTier(species) {
   const data = species?.name ? speciesTierByName[species.name] : null
   if (!data) return null
-  return data
+  return { ...data, percent: Math.round((data.strength / MAX_STRENGTH) * 100) }
 }

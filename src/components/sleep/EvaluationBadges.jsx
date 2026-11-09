@@ -44,9 +44,9 @@ export default function EvaluationBadges({ evaluation }) {
         ) : speciesTier ? (
           <span
             className={`${badgeClass} ${SPECIES_TIER_BADGE_CLASS[speciesTier.tier]}`}
-            title={`Tier list de RaenonX: ${Math.round(speciesTier.strength).toLocaleString('es-CL')} de fuerza diaria a nivel 60`}
+            title={`Tier list de RaenonX: ${Math.round(speciesTier.strength).toLocaleString('es-CL')} de fuerza diaria a nivel 60 (${speciesTier.percent}% de Heracross, la más fuerte de la Pokédex)`}
           >
-            Especie: Tier {speciesTier.tier}
+            Especie: Tier {speciesTier.tier} ({speciesTier.percent}%)
           </span>
         ) : (
           <span className={`${badgeClass} bg-gray-100 text-gray-600`}>Especie: sin datos</span>

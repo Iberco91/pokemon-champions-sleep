@@ -83,7 +83,9 @@ export default function AnalyticsPanel() {
                 {evaluation.speciesTier
                   ? `${evaluation.speciesTier.tier} en la tier list de RaenonX (${Math.round(
                       evaluation.speciesTier.strength,
-                    ).toLocaleString('es-CL')} de fuerza diaria a nivel 60). Mide la especie, no este ejemplar.`
+                    ).toLocaleString('es-CL')} de fuerza diaria a nivel 60, ${
+                      evaluation.speciesTier.percent
+                    }% de Heracross, la más fuerte de la Pokédex). Mide la especie, no este ejemplar.`
                   : 'RaenonX no publica datos para esta especie.'}
               </p>
               {evaluation.rpEfficiency != null && (
