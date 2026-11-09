@@ -57,7 +57,7 @@ export default function EvaluationBadges({ evaluation }) {
           </span>
         ) : (
           <span className={`${badgeClass} ${QUALITY_BADGE_CLASS[evaluation.tier]}`}>
-            Calidad del ejemplar: {evaluation.score}%
+            Calidad del ejemplar: {evaluation.score}% ({evaluation.tier})
           </span>
         )}
         {!evaluation.mandatoryMet && (
