@@ -173,11 +173,33 @@ function* combinations(items, size) {
   }
 }
 
+// Naturaleza óptima por especialidad (CLAUDE.md sección 1.2). Vive aquí y no
+// en sleepScoring.js porque el techo de RP también la usa (ver abajo).
+export const OPTIMAL_NATURE_STAT_BY_SPECIALTY = {
+  Berries: 'Helping Speed',
+  Ingredients: 'Ingredient Finding',
+  Skills: 'Main Skill Chance',
+}
+
+function isAaaCombo({ ingredient_a, ingredient_b, ingredient_c }) {
+  const filled = [ingredient_a, ingredient_b, ingredient_c].filter(Boolean)
+  return new Set(filled).size <= 1
+}
+
+// El techo de RP se busca solo entre los ejemplares que sacan el máximo en la
+// parte estructural del puntaje (usuario 2026-11-11): en Ingredientes, solo
+// combos AAA; en todas las especialidades, solo naturalezas con su stat
+// óptimo en positivo. Antes el techo era el RP más alto de cualquier combo, y
+// la fórmula del juego a veces prefiere un ingrediente B/C más valioso (ej.
+// Blastoise Moomoo/Moomoo/Cacao) o una naturaleza + Helping Speed, así que un
+// ejemplar AAA perfecto no podía llegar a 100%. En la práctica un solo
+// ingrediente sirve más para cocinar, por eso AAA es el ideal.
+//
 // La elección de ingrediente por slot no depende de sub-skills/naturaleza:
 // en getIngredientFactor, helpFactor e ingredientChance multiplican el
 // resultado como un escalar común, así que buscar el combo que maximiza el
 // factor con escalares fijos en 1 da el mismo orden que con los reales.
-function findBestIngredientCombo(entry, species) {
+function findBestIngredientCombo(entry, species, requireAaa = species.specialty === 'Ingredients') {
   const level = entry.level ?? 1
   const slotUnlockLevels = { ingredient_a: 1, ingredient_b: 30, ingredient_c: 60 }
   const slotLetters = { ingredient_a: 'a', ingredient_b: 'b', ingredient_c: 'c' }
@@ -194,6 +216,7 @@ function findBestIngredientCombo(entry, species) {
     for (const ingredient_b of optionsByField[1]) {
       for (const ingredient_c of optionsByField[2]) {
         const candidate = { ...entry, ingredient_a, ingredient_b, ingredient_c }
+        if (requireAaa && !isAaaCombo(candidate)) continue
         const value = getIngredientFactor(candidate, species, 1, 1)
         if (value > bestValue) {
           bestValue = value
@@ -202,6 +225,8 @@ function findBestIngredientCombo(entry, species) {
       }
     }
   }
+  // Si la especie no tiene ningún combo AAA posible, se usa el mejor de todos.
+  if (!best && requireAaa) return findBestIngredientCombo(entry, species, false)
   return best ?? { ingredient_a: entry.ingredient_a ?? null, ingredient_b: entry.ingredient_b ?? null, ingredient_c: entry.ingredient_c ?? null }
 }
 
@@ -213,6 +238,10 @@ function findBestRpForSubskillsAndNature(baseEntry, species) {
   const unlockedLevels = subskillLevels.filter((lvl) => level >= lvl)
   const slotCount = Math.min(unlockedLevels.length, RP_SUBSKILL_CANDIDATES.length)
 
+  const optimalStat = OPTIMAL_NATURE_STAT_BY_SPECIALTY[species.specialty]
+  const optimalNatures = natureOptions.filter((nature) => nature.positive === optimalStat)
+  const naturesToTry = optimalNatures.length ? optimalNatures : natureOptions
+
   let bestRp = -Infinity
   const combosToTry = slotCount === 0 ? [[]] : combinations(RP_SUBSKILL_CANDIDATES, slotCount)
   for (const combo of combosToTry) {
@@ -220,7 +249,7 @@ function findBestRpForSubskillsAndNature(baseEntry, species) {
     unlockedLevels.forEach((lvl, index) => {
       candidateEntry[`subskill_${lvl}`] = combo[index] ?? null
     })
-    for (const nature of natureOptions) {
+    for (const nature of naturesToTry) {
       const rp = computeRp(candidateEntry, species, nature)
       if (rp != null && rp > bestRp) bestRp = rp
     }

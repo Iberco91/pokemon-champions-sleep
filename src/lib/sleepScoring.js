@@ -26,7 +26,7 @@ import { getSpeciesTier } from '../data/sleepSpeciesTiers.js'
 import { getSupportSpeciesScore, isEnergySupport } from '../data/sleepSupportTiers.js'
 import { getIngredientQuantity } from '../data/sleepIngredientSlots.js'
 import { ingredientValues } from '../data/sleepRecipes.js'
-import { computeRp, computeIdealRp, RP_SUBSKILL_CANDIDATES } from './sleepRp.js'
+import { computeRp, computeIdealRp, RP_SUBSKILL_CANDIDATES, OPTIMAL_NATURE_STAT_BY_SPECIALTY } from './sleepRp.js'
 
 // "Helping Speed L" y "Skill Trigger L" no existen en el juego actual (ver
 // nota en sleepData.js sobre subskillOptions).
@@ -105,11 +105,6 @@ function sumSubskillPoints(specialty, matchedDesiredSubskills) {
   return matchedDesiredSubskills.reduce((sum, skill) => sum + (pointsMap[skill] ?? 0), 0)
 }
 
-const OPTIMAL_NATURE_STAT_BY_SPECIALTY = {
-  Berries: 'Helping Speed',
-  Ingredients: 'Ingredient Finding',
-  Skills: 'Main Skill Chance',
-}
 
 const MANDATORY_BERRY_SUBSKILL = 'Berry Finding S'
 
