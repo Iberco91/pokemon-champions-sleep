@@ -65,8 +65,9 @@ function PlanDetails({ entry, species, nature, isSupport }) {
       </ol>
       {plan.maxScore < 100 && !isSupport && (
         <p className="m-0 text-xs text-gray-500">
-          No llega a 100% porque la mitad del puntaje (eficiencia de RP) premia sub-skills algo distintas a las de su
-          especialidad. El máximo alcanzable es el mejor equilibrio entre ambas.
+          No llega a 100% porque la mitad del puntaje (eficiencia de RP) usa la fórmula de RP del juego, que no siempre
+          premia lo mismo que su especialidad: por ejemplo, puede preferir ingredientes más valiosos en vez de AAA, o una
+          naturaleza + Helping Speed en vez de la óptima. El máximo alcanzable es el mejor equilibrio entre ambas.
         </p>
       )}
     </div>
