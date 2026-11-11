@@ -47,9 +47,16 @@ import { computeRp, computeIdealRp, RP_SUBSKILL_CANDIDATES } from './sleepRp.js'
 // que compararse, así que mantienen el valor plano que ya tenían.
 const BERRY_SUBSKILL_POINTS = { 'Helping Bonus': 10, 'Helping Speed S': 7, 'Helping Speed M': 13 }
 
+// Helping Speed S/M también cuentan para Ingredientes (usuario 2026-11-11):
+// -7%/-14% de frecuencia = más ayudas por día = más ingredientes. Antes no
+// estaban y valían solo por RP, donde pierden contra el +22,1% fijo de Energy
+// Recovery Bonus, así que "¿Qué le falta?" sugería cambiar Helping Speed M por
+// Energy Recovery Bonus en Pokémon de Ingredientes.
 const INGREDIENT_SUBSKILL_POINTS = {
   'Ingredient Finder S': 4,
   'Ingredient Finder M': 8,
+  'Helping Speed S': 4,
+  'Helping Speed M': 8,
   'Inventory Up S': 3,
   'Inventory Up M': 6,
   'Inventory Up L': 9,
@@ -348,7 +355,12 @@ export function evaluateSleepPokemon({ entry, species, nature }) {
 // es de Berries, Dream Shard Bonus subía más el RP que Berry Finding S y "¿Qué
 // le falta?" sugería cambiar Berry Finding S por Dream Shard Bonus. El RP real
 // (actualRp) se sigue mostrando tal cual lo calcula el juego.
-const NON_SCORING_RP_SUBSKILLS = ['Dream Shard Bonus', 'Sleep EXP Bonus', 'Research EXP Bonus']
+//
+// Energy Recovery Bonus entra en la misma lista (usuario 2026-11-11): también
+// suma +22,1% al RP, pero no aumenta la producción del Pokémon (solo la
+// energía del equipo al dormir, que tiene tope de 100). En supports sigue
+// valiendo sus puntos de SUPPORT_SUBSKILL_POINTS.
+const NON_SCORING_RP_SUBSKILLS = ['Dream Shard Bonus', 'Sleep EXP Bonus', 'Research EXP Bonus', 'Energy Recovery Bonus']
 
 function withoutNonScoringSubskills(entry) {
   const cleaned = { ...entry }
