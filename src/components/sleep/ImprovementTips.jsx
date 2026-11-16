@@ -50,18 +50,17 @@ function PlanDetails({ entry, species, nature, isSupport }) {
       </p>
       <ol className="m-0 pl-5 flex flex-col gap-1">
         {plan.steps.map((step, index) => {
-          const previousScore = index === 0 ? plan.startScore : plan.steps[index - 1].scoreAfter
+          // El slot de origen de una sub-skill que se mueve comparte paso con
+          // el destino (línea anterior): se compara contra el puntaje previo
+          // a ese paso para que muestre la misma subida.
+          const stepsBack = step.movedTo ? 2 : 1
+          const previousScore = index < stepsBack ? plan.startScore : plan.steps[index - stepsBack].scoreAfter
           return (
             <li key={step.field}>
               <strong>{step.label}:</strong> {formatValue(step.field, step.from)} →{' '}
               <span className="font-semibold text-emerald-700">{formatValue(step.field, step.to)}</span>{' '}
-              {step.movedFrom && (
-                <span className="text-gray-500">(la que tenía en {step.movedFrom.replace('Sub-skill ', '')}) </span>
-              )}
               <span className="text-gray-500">
-                {step.movedTo
-                  ? `(su sub-skill pasa a ${step.movedTo.replace('Sub-skill ', '')}; mismo paso que el anterior)`
-                  : `(${step.scoreAfter > previousScore ? 'sube a' : 'mantiene'} ${step.scoreAfter}%)`}
+                ({step.scoreAfter > previousScore ? 'sube a' : 'mantiene'} {step.scoreAfter}%)
               </span>
             </li>
           )
