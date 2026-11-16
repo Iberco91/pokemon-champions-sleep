@@ -236,14 +236,19 @@ function findBestIngredientCombo(entry, species, requireAaa = species.specialty 
 function findBestRpForSubskillsAndNature(baseEntry, species) {
   const level = baseEntry.level ?? 1
   const unlockedLevels = subskillLevels.filter((lvl) => level >= lvl)
-  const slotCount = Math.min(unlockedLevels.length, RP_SUBSKILL_CANDIDATES.length)
 
   const optimalStat = OPTIMAL_NATURE_STAT_BY_SPECIALTY[species.specialty]
   const optimalNatures = natureOptions.filter((nature) => nature.positive === optimalStat)
   const naturesToTry = optimalNatures.length ? optimalNatures : natureOptions
 
+  // En Ingredientes, Berry Finding S no cuenta en el RP del puntaje
+  // (sleepScoring.js#getNonScoringRpSubskills), así que tampoco en el techo.
+  const candidates =
+    species.specialty === 'Ingredients' ? RP_SUBSKILL_CANDIDATES.filter((skill) => skill !== 'Berry Finding S') : RP_SUBSKILL_CANDIDATES
+  const slotCount = Math.min(unlockedLevels.length, candidates.length)
+
   let bestRp = -Infinity
-  const combosToTry = slotCount === 0 ? [[]] : combinations(RP_SUBSKILL_CANDIDATES, slotCount)
+  const combosToTry = slotCount === 0 ? [[]] : combinations(candidates, slotCount)
   for (const combo of combosToTry) {
     const candidateEntry = { ...baseEntry }
     unlockedLevels.forEach((lvl, index) => {

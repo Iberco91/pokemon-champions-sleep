@@ -59,16 +59,23 @@ const BERRY_NATURE_POINTS = 20
 // estaban y valían solo por RP, donde pierden contra el +22,1% fijo de Energy
 // Recovery Bonus, así que "¿Qué le falta?" sugería cambiar Helping Speed M por
 // Energy Recovery Bonus en Pokémon de Ingredientes.
+//
+// Recalibrado con el usuario 2026-11-16: antes el tope era 30 y con 4
+// deseadas ya se llegaba, así que la quinta no sumaba nada. Ahora el tope
+// (45) es la suma de las 5 mejores: IFM 12 + HSM 10 + IUL 9 + HB 8 + IFS/IUM 6.
 const INGREDIENT_SUBSKILL_POINTS = {
-  'Ingredient Finder S': 4,
-  'Ingredient Finder M': 8,
-  'Helping Speed S': 4,
-  'Helping Speed M': 8,
+  'Ingredient Finder S': 6,
+  'Ingredient Finder M': 12,
+  'Helping Speed S': 5,
+  'Helping Speed M': 10,
   'Inventory Up S': 3,
   'Inventory Up M': 6,
   'Inventory Up L': 9,
-  'Helping Bonus': 6,
+  'Helping Bonus': 8,
 }
+const INGREDIENT_COMBO_WEIGHT = 0.4
+const INGREDIENT_MAX_SUBSKILL_POINTS = 45
+const INGREDIENT_NATURE_POINTS = 15
 
 const SKILLS_SUBSKILL_POINTS = {
   'Skill Trigger S': 7,
@@ -277,11 +284,16 @@ function computeBuildScore(specialty, subskills, ingredients, natureOptimal, mat
       ingredientCombo === 'ABA'
         ? getTwoUniqueIngredientScore(ingredients, speciesName)
         : INGREDIENT_COMBO_SCORE[ingredientCombo]
+    // Combo (AAA = 40) + sub-skills hasta 45 + naturaleza + Ingredient
+    // Finding 15 = 100. Antes: combo x 0,6 + hasta 30 + 10.
     const subskillPoints = Math.min(
-      30,
+      INGREDIENT_MAX_SUBSKILL_POINTS,
       sumSubskillPoints(specialty, matchedDesiredSubskills) + sumSecondarySubskillPoints(specialty, subskills),
     )
-    const score = Math.min(100, Math.round(comboScore * 0.6 + subskillPoints + (natureOptimal ? 10 : 0)))
+    const score = Math.min(
+      100,
+      Math.round(comboScore * INGREDIENT_COMBO_WEIGHT + subskillPoints + (natureOptimal ? INGREDIENT_NATURE_POINTS : 0)),
+    )
     return { score, mandatoryMet: true, ingredientCombo }
   }
 
@@ -337,7 +349,7 @@ export function evaluateSleepPokemon({ entry, species, nature }) {
   // La eficiencia de RP se mide siempre a SCORING_LEVEL (ver más abajo); el RP
   // real (actualRp) sigue siendo el del nivel actual.
   const scoringEntry = toScoringLevel(entry)
-  const filteredEntry = baseResult.supportTier ? scoringEntry : withoutNonScoringSubskills(scoringEntry)
+  const filteredEntry = baseResult.supportTier ? scoringEntry : withoutNonScoringSubskills(scoringEntry, specialty)
   const actualRp = species ? computeRp(entry, species, nature) : null
   const scoredRp = species ? computeRp(filteredEntry, species, nature) : null
   const excludesNonScoringSubskills = species ? scoredRp !== computeRp(scoringEntry, species, nature) : false
@@ -387,10 +399,21 @@ export function toScoringLevel(entry) {
 // valiendo sus puntos de SUPPORT_SUBSKILL_POINTS.
 const NON_SCORING_RP_SUBSKILLS = ['Dream Shard Bonus', 'Sleep EXP Bonus', 'Research EXP Bonus', 'Energy Recovery Bonus']
 
-function withoutNonScoringSubskills(entry) {
+// Berry Finding S tampoco cuenta en el RP de los especialistas en
+// Ingredientes (usuario 2026-11-16): la fórmula de RP valora cada ingrediente
+// suelto y no el plato que se cocina con él, así que premiaba más a Berry
+// Finding S que a Ingredient Finder S (Bulbasaur: +875 RP contra +385) y el
+// techo de RP de un Pokémon de Ingredientes exigía Berry Finding S. Mantiene
+// sus 2 puntos de estructura. El techo excluye lo mismo (sleepRp.js).
+function getNonScoringRpSubskills(specialty) {
+  return specialty === 'Ingredients' ? [...NON_SCORING_RP_SUBSKILLS, MANDATORY_BERRY_SUBSKILL] : NON_SCORING_RP_SUBSKILLS
+}
+
+function withoutNonScoringSubskills(entry, specialty) {
+  const excluded = getNonScoringRpSubskills(specialty)
   const cleaned = { ...entry }
   for (const level of subskillLevels) {
-    if (NON_SCORING_RP_SUBSKILLS.includes(cleaned[`subskill_${level}`])) cleaned[`subskill_${level}`] = null
+    if (excluded.includes(cleaned[`subskill_${level}`])) cleaned[`subskill_${level}`] = null
   }
   return cleaned
 }
