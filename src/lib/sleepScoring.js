@@ -45,7 +45,14 @@ import { computeRp, computeIdealRp, RP_SUBSKILL_CANDIDATES, OPTIMAL_NATURE_STAT_
 //   - Inventory Up S/M/L: +6/+12/+18 Carry Limit (sleepStats.js INVENTORY_UP_BONUS) -> ratio 1:2:3
 // Las sub-skills de un solo tier (Helping Bonus) no tienen variante con la
 // que compararse, así que mantienen el valor plano que ya tenían.
-const BERRY_SUBSKILL_POINTS = { 'Helping Bonus': 10, 'Helping Speed S': 7, 'Helping Speed M': 13 }
+//
+// Berries (recalibrado con el usuario 2026-11-16): las sub-skills deseadas
+// valen hasta 55 en vez de 30, para que tener las buenas pese más que solo
+// tener Berry Finding S (ver computeBuildScore).
+const BERRY_SUBSKILL_POINTS = { 'Helping Bonus': 18, 'Helping Speed S': 12, 'Helping Speed M': 25 }
+const BERRY_MANDATORY_POINTS = 25
+const BERRY_MAX_SUBSKILL_POINTS = 55
+const BERRY_NATURE_POINTS = 20
 
 // Helping Speed S/M también cuentan para Ingredientes (usuario 2026-11-11):
 // -7%/-14% de frecuencia = más ayudas por día = más ingredientes. Antes no
@@ -255,13 +262,12 @@ function computeBuildScore(specialty, subskills, ingredients, natureOptimal, mat
   if (specialty === 'Berries') {
     const mandatoryMet = subskills.includes(MANDATORY_BERRY_SUBSKILL)
     if (!mandatoryMet) return { score: 0, mandatoryMet: false, ingredientCombo: null }
-    // Los 4 slots restantes (fuera de BFS) pueden cubrir las 3 sub-skills
-    // deseadas restantes — techo 30 (igual que antes: 3 matches x 10), ahora
-    // repartido por tier real en vez de parejo. Base 60 (antes 50, que dejaba
-    // el techo en 90 y ningún Pokémon de Berries podía llegar a 100%;
-    // corregido 2026-10-30).
-    const subskillPoints = Math.min(30, sumSubskillPoints(specialty, matchedDesiredSubskills))
-    const score = Math.min(100, 60 + subskillPoints + (natureOptimal ? 10 : 0))
+    // BFS 25 + deseadas hasta 55 (HSM 25 + HB 18 + HSS 12) + naturaleza
+    // + Helping Speed 20 = 100. Antes era 60 + 30 + 10, y la base de 60 por
+    // tener BFS dominaba: Shiny (Raichu con BFS, Helping Bonus y 3 sub-skills
+    // inútiles) sacaba 80% de estructura; ahora saca 63%.
+    const subskillPoints = Math.min(BERRY_MAX_SUBSKILL_POINTS, sumSubskillPoints(specialty, matchedDesiredSubskills))
+    const score = Math.min(100, BERRY_MANDATORY_POINTS + subskillPoints + (natureOptimal ? BERRY_NATURE_POINTS : 0))
     return { score, mandatoryMet: true, ingredientCombo: null }
   }
 
