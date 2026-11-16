@@ -232,6 +232,9 @@ function buildSteps(start, target, species) {
         from: getFieldValue(start, field),
         to: getFieldValue(target, field),
         movedFrom: field === destination && source ? FIELD_LABELS[source] : null,
+        // Slot de origen de una sub-skill que se movió: es la otra mitad del
+        // mismo paso, así que no tiene subida propia.
+        movedTo: field !== destination ? FIELD_LABELS[destination] : null,
         scoreAfter: best.score,
       })
     })

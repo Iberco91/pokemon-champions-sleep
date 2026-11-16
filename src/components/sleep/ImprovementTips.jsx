@@ -10,8 +10,10 @@ import { computeImprovementPlan } from '../../lib/sleepImprovements.js'
 function formatValue(field, value) {
   if (!value) return '—'
   if (field !== 'nature') return value
+  // Se muestra también el stat negativo: dos naturalezas con el mismo
+  // positivo (ej. Careful y Sassy) solo se distinguen por el negativo.
   const nature = natureOptions.find((option) => option.name === value)
-  return nature?.positive ? `${value} (+${nature.positive})` : `${value} (neutra)`
+  return nature?.positive ? `${value} (+${nature.positive} / −${nature.negative})` : `${value} (neutra)`
 }
 
 function PlanDetails({ entry, species, nature, isSupport }) {
@@ -57,7 +59,9 @@ function PlanDetails({ entry, species, nature, isSupport }) {
                 <span className="text-gray-500">(la que tenía en {step.movedFrom.replace('Sub-skill ', '')}) </span>
               )}
               <span className="text-gray-500">
-                ({step.scoreAfter > previousScore ? 'sube a' : 'mantiene'} {step.scoreAfter}%)
+                {step.movedTo
+                  ? `(su sub-skill pasa a ${step.movedTo.replace('Sub-skill ', '')}; mismo paso que el anterior)`
+                  : `(${step.scoreAfter > previousScore ? 'sube a' : 'mantiene'} ${step.scoreAfter}%)`}
               </span>
             </li>
           )
