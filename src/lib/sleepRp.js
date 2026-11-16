@@ -134,7 +134,8 @@ export function computeRp(entry, species, nature) {
 // 60 es bueno"), se calcula cuál sería el RP máximo de ESTE MISMO Pokémon
 // (misma especie, mismo nivel, mismo Ribbon y mismo nivel de Main Skill —
 // es decir, la misma inversión ya hecha) si sus sub-skills, naturaleza e
-// ingredientes fueran los ideales. El cociente RP real / RP ideal da un %
+// ingredientes (estos solo en Ingredientes) fueran los ideales de la
+// estructura del puntaje. El cociente RP real / RP ideal da un %
 // de eficiencia comparable entre niveles y especies (mismo enfoque que usan
 // calculadoras de IV de la comunidad, ej. nitoyon/pokesleep-tool), y es lo
 // que sleepScoring.js combina con el score estructural existente.
@@ -171,6 +172,22 @@ export const INGREDIENT_IDEAL_SUBSKILLS = [
   'Inventory Up L',
   'Helping Bonus',
 ]
+
+// Lo mismo para Skills (usuario 2026-11-16): el set que da el máximo en su
+// estructura (sleepScoring.js#SKILLS_SUBSKILL_POINTS, 13+13+10+7+7 = 50). Sin
+// esto la fórmula de RP prefería Berry Finding S sobre Skill Trigger S
+// (Sableye, Dedenne).
+const SKILLS_IDEAL_SUBSKILLS = ['Skill Trigger M', 'Skill Trigger S', 'Helping Speed M', 'Helping Speed S', 'Helping Bonus']
+
+// Berries: Berry Finding S (obligatoria) + las 3 deseadas, que juntas dan el
+// máximo de su estructura (sleepScoring.js#BERRY_SUBSKILL_POINTS, 25+18+12 = 55).
+const BERRY_IDEAL_SUBSKILLS = ['Berry Finding S', 'Helping Speed M', 'Helping Bonus', 'Helping Speed S']
+
+const IDEAL_RP_SUBSKILLS_BY_SPECIALTY = {
+  Berries: BERRY_IDEAL_SUBSKILLS,
+  Ingredients: INGREDIENT_IDEAL_SUBSKILLS,
+  Skills: SKILLS_IDEAL_SUBSKILLS,
+}
 
 // "Sleep EXP Bonus" (y Dream Shard / Research EXP / Energy Recovery Bonus) también suben el RP
 // real, pero no cuentan en el puntaje (decisión del usuario 2026-11-09, ver
@@ -258,15 +275,27 @@ function findBestRpForSubskillsAndNature(baseEntry, species) {
   const optimalNatures = natureOptions.filter((nature) => nature.positive === optimalStat)
   const naturesToTry = optimalNatures.length ? optimalNatures : natureOptions
 
-  // En Ingredientes el techo usa solo el set ideal de la estructura (ver
-  // INGREDIENT_IDEAL_SUBSKILLS); si no, la fórmula de RP prefiere dos
-  // Inventory Up y el ejemplar ideal no llegaría a 100%.
-  const candidates = species.specialty === 'Ingredients' ? INGREDIENT_IDEAL_SUBSKILLS : RP_SUBSKILL_CANDIDATES
-  const slotCount = Math.min(unlockedLevels.length, candidates.length)
+  // El techo exige el set ideal de la estructura de cada especialidad (ver
+  // IDEAL_RP_SUBSKILLS_BY_SPECIALTY); si no, la fórmula de RP prefiere dos
+  // Inventory Up o Berry Finding S y el ejemplar ideal no llega a 100%. En
+  // Berries el set ideal tiene 4, así que el quinto slot se elige por RP
+  // entre el resto.
+  const required = IDEAL_RP_SUBSKILLS_BY_SPECIALTY[species.specialty] ?? []
+  const slotCount = unlockedLevels.length
+  const fillers = RP_SUBSKILL_CANDIDATES.filter((skill) => !required.includes(skill))
+
+  function* subskillCombos() {
+    if (required.length >= slotCount) {
+      yield* combinations(required, slotCount)
+      return
+    }
+    for (const rest of combinations(fillers, Math.min(fillers.length, slotCount - required.length))) {
+      yield [...required, ...rest]
+    }
+  }
 
   let bestRp = -Infinity
-  const combosToTry = slotCount === 0 ? [[]] : combinations(candidates, slotCount)
-  for (const combo of combosToTry) {
+  for (const combo of subskillCombos()) {
     const candidateEntry = { ...baseEntry }
     unlockedLevels.forEach((lvl, index) => {
       candidateEntry[`subskill_${lvl}`] = combo[index] ?? null
@@ -286,10 +315,18 @@ const idealRpCache = new Map()
 export function computeIdealRp(entry, species) {
   if (!species) return null
   const level = entry.level ?? 1
-  const cacheKey = `${species.id}|${level}|${entry.ribbon_level ?? 0}|${entry.skill_level ?? 1}`
+  // Solo en Ingredientes los ingredientes son parte del puntaje (y "¿Qué le
+  // falta?" los sugiere). En Berries y Skills el techo usa los ingredientes
+  // que el Pokémon ya tiene (usuario 2026-11-16): si no, un Sableye perfecto
+  // quedaba en 99% por un ingrediente que no se puntúa ni se puede cambiar.
+  const scoresIngredients = species.specialty === 'Ingredients'
+  const ingredientKey = scoresIngredients ? '' : `|${entry.ingredient_a}|${entry.ingredient_b}|${entry.ingredient_c}`
+  const cacheKey = `${species.id}|${level}|${entry.ribbon_level ?? 0}|${entry.skill_level ?? 1}${ingredientKey}`
   if (idealRpCache.has(cacheKey)) return idealRpCache.get(cacheKey)
 
-  const idealIngredients = findBestIngredientCombo(entry, species)
+  const idealIngredients = scoresIngredients
+    ? findBestIngredientCombo(entry, species)
+    : { ingredient_a: entry.ingredient_a ?? null, ingredient_b: entry.ingredient_b ?? null, ingredient_c: entry.ingredient_c ?? null }
   const baseEntry = { ...entry, ...idealIngredients }
   const idealRp = findBestRpForSubskillsAndNature(baseEntry, species)
 

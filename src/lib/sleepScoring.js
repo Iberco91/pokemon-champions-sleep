@@ -414,13 +414,14 @@ export function toScoringLevel(entry) {
 const NON_SCORING_RP_SUBSKILLS = ['Dream Shard Bonus', 'Sleep EXP Bonus', 'Research EXP Bonus', 'Energy Recovery Bonus']
 
 // Berry Finding S tampoco cuenta en el RP de los especialistas en
-// Ingredientes (usuario 2026-11-16): la fórmula de RP valora cada ingrediente
+// Ingredientes ni en los de Skills (usuario 2026-11-16; en Skills, Sableye y
+// Dedenne cambiaban Skill Trigger S por Berry Finding S): la fórmula de RP valora cada ingrediente
 // suelto y no el plato que se cocina con él, así que premiaba más a Berry
 // Finding S que a Ingredient Finder S (Bulbasaur: +875 RP contra +385) y el
 // techo de RP de un Pokémon de Ingredientes exigía Berry Finding S. Mantiene
 // sus 2 puntos de estructura. El techo excluye lo mismo (sleepRp.js).
 function getNonScoringRpSubskills(specialty) {
-  return specialty === 'Ingredients' ? [...NON_SCORING_RP_SUBSKILLS, MANDATORY_BERRY_SUBSKILL] : NON_SCORING_RP_SUBSKILLS
+  return specialty === 'Berries' ? NON_SCORING_RP_SUBSKILLS : [...NON_SCORING_RP_SUBSKILLS, MANDATORY_BERRY_SUBSKILL]
 }
 
 function withoutNonScoringSubskills(entry, specialty) {
