@@ -158,6 +158,20 @@ export const RP_SUBSKILL_CANDIDATES = [
   'Skill Trigger M',
   'Helping Bonus',
 ]
+// Set ideal de sub-skills de un especialista en Ingredientes (usuario
+// 2026-11-16): el que da el máximo en la estructura del puntaje
+// (sleepScoring.js#INGREDIENT_SUBSKILL_POINTS). El techo de RP de esa
+// especialidad se calcula con este set, igual que ya se exige AAA y la
+// naturaleza óptima: el 100% es el ejemplar con la estructura ideal. Sin
+// Berry Finding S, que en Ingredientes no cuenta en el RP del puntaje.
+export const INGREDIENT_IDEAL_SUBSKILLS = [
+  'Ingredient Finder M',
+  'Ingredient Finder S',
+  'Helping Speed M',
+  'Inventory Up L',
+  'Helping Bonus',
+]
+
 // "Sleep EXP Bonus" (y Dream Shard / Research EXP / Energy Recovery Bonus) también suben el RP
 // real, pero no cuentan en el puntaje (decisión del usuario 2026-11-09, ver
 // sleepScoring.js#NON_SCORING_RP_SUBSKILLS), así que quedan fuera del techo:
@@ -244,10 +258,10 @@ function findBestRpForSubskillsAndNature(baseEntry, species) {
   const optimalNatures = natureOptions.filter((nature) => nature.positive === optimalStat)
   const naturesToTry = optimalNatures.length ? optimalNatures : natureOptions
 
-  // En Ingredientes, Berry Finding S no cuenta en el RP del puntaje
-  // (sleepScoring.js#getNonScoringRpSubskills), así que tampoco en el techo.
-  const candidates =
-    species.specialty === 'Ingredients' ? RP_SUBSKILL_CANDIDATES.filter((skill) => skill !== 'Berry Finding S') : RP_SUBSKILL_CANDIDATES
+  // En Ingredientes el techo usa solo el set ideal de la estructura (ver
+  // INGREDIENT_IDEAL_SUBSKILLS); si no, la fórmula de RP prefiere dos
+  // Inventory Up y el ejemplar ideal no llegaría a 100%.
+  const candidates = species.specialty === 'Ingredients' ? INGREDIENT_IDEAL_SUBSKILLS : RP_SUBSKILL_CANDIDATES
   const slotCount = Math.min(unlockedLevels.length, candidates.length)
 
   let bestRp = -Infinity

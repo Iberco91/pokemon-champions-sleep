@@ -26,7 +26,13 @@ import { getSpeciesTier } from '../data/sleepSpeciesTiers.js'
 import { getSupportSpeciesScore, isEnergySupport } from '../data/sleepSupportTiers.js'
 import { getIngredientQuantity } from '../data/sleepIngredientSlots.js'
 import { ingredientValues } from '../data/sleepRecipes.js'
-import { computeRp, computeIdealRp, RP_SUBSKILL_CANDIDATES, OPTIMAL_NATURE_STAT_BY_SPECIALTY } from './sleepRp.js'
+import {
+  computeRp,
+  computeIdealRp,
+  RP_SUBSKILL_CANDIDATES,
+  OPTIMAL_NATURE_STAT_BY_SPECIALTY,
+  INGREDIENT_IDEAL_SUBSKILLS,
+} from './sleepRp.js'
 
 // "Helping Speed L" y "Skill Trigger L" no existen en el juego actual (ver
 // nota en sleepData.js sobre subskillOptions).
@@ -61,11 +67,16 @@ const BERRY_NATURE_POINTS = 20
 // Energy Recovery Bonus en Pokémon de Ingredientes.
 //
 // Recalibrado con el usuario 2026-11-16: antes el tope era 30 y con 4
-// deseadas ya se llegaba, así que la quinta no sumaba nada. Ahora el tope
-// (45) es la suma de las 5 mejores: IFM 12 + HSM 10 + IUL 9 + HB 8 + IFS/IUM 6.
+// deseadas ya se llegaba, así que la quinta no sumaba nada. Ahora las
+// sub-skills valen hasta 45 puntos del build, proporcional a sus puntos
+// contra los del set ideal (INGREDIENT_IDEAL_SUBSKILLS de sleepRp.js: IFM 16 +
+// HSM 10 + IUL 9 + HB 8 + IFS 8 = 51). Ingredient Finder S vale más que
+// Inventory Up M (usuario 2026-11-16): trae más ingredientes en todas las
+// ayudas, mientras Inventory Up solo sirve cuando el Pokémon se llena de
+// noche. Con IFS 6 = IUM 6, el ideal quedaba con dos Inventory Up.
 const INGREDIENT_SUBSKILL_POINTS = {
-  'Ingredient Finder S': 6,
-  'Ingredient Finder M': 12,
+  'Ingredient Finder S': 8,
+  'Ingredient Finder M': 16,
   'Helping Speed S': 5,
   'Helping Speed M': 10,
   'Inventory Up S': 3,
@@ -73,6 +84,10 @@ const INGREDIENT_SUBSKILL_POINTS = {
   'Inventory Up L': 9,
   'Helping Bonus': 8,
 }
+const INGREDIENT_IDEAL_SUBSKILL_POINTS = INGREDIENT_IDEAL_SUBSKILLS.reduce(
+  (sum, skill) => sum + INGREDIENT_SUBSKILL_POINTS[skill],
+  0,
+)
 const INGREDIENT_COMBO_WEIGHT = 0.4
 const INGREDIENT_MAX_SUBSKILL_POINTS = 45
 const INGREDIENT_NATURE_POINTS = 15
@@ -286,10 +301,9 @@ function computeBuildScore(specialty, subskills, ingredients, natureOptimal, mat
         : INGREDIENT_COMBO_SCORE[ingredientCombo]
     // Combo (AAA = 40) + sub-skills hasta 45 + naturaleza + Ingredient
     // Finding 15 = 100. Antes: combo x 0,6 + hasta 30 + 10.
-    const subskillPoints = Math.min(
-      INGREDIENT_MAX_SUBSKILL_POINTS,
-      sumSubskillPoints(specialty, matchedDesiredSubskills) + sumSecondarySubskillPoints(specialty, subskills),
-    )
+    const rawPoints =
+      sumSubskillPoints(specialty, matchedDesiredSubskills) + sumSecondarySubskillPoints(specialty, subskills)
+    const subskillPoints = INGREDIENT_MAX_SUBSKILL_POINTS * Math.min(1, rawPoints / INGREDIENT_IDEAL_SUBSKILL_POINTS)
     const score = Math.min(
       100,
       Math.round(comboScore * INGREDIENT_COMBO_WEIGHT + subskillPoints + (natureOptimal ? INGREDIENT_NATURE_POINTS : 0)),
