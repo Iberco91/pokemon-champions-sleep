@@ -3,8 +3,8 @@
 // Sub-skills deseadas/Naturaleza óptima en un puntaje base 0-100 ("build
 // score": qué tan bien elegidas están las sub-skills/ingredientes/naturaleza
 // en abstracto), y lo combina 50/50 con la "eficiencia de RP" real: el RP
-// actual del Pokémon (sleepRp.js#computeRp) contra el RP máximo teórico que
-// alcanzaría ESTE MISMO Pokémon en su mismo nivel/Ribbon/nivel de Main Skill
+// del Pokémon (sleepRp.js#computeRp) contra el RP máximo teórico que
+// alcanzaría ESTE MISMO Pokémon, ambos a nivel 80 (SCORING_LEVEL) y con su Ribbon/nivel de Main Skill
 // con la mejor tirada posible de sub-skills/naturaleza/ingredientes
 // (sleepRp.js#computeIdealRp). Ese cociente reemplaza los cortes fijos por
 // nivel (ej. "6000 de RP a nivel 60 es bueno") porque compara al Pokémon
@@ -334,17 +334,41 @@ export function evaluateSleepPokemon({ entry, species, nature }) {
     return { ...baseResult, score: 0, tier: LOWEST_TIER, rpEfficiency: null, actualRp: null, idealRp: null }
   }
 
+  // La eficiencia de RP se mide siempre a SCORING_LEVEL (ver más abajo); el RP
+  // real (actualRp) sigue siendo el del nivel actual.
+  const scoringEntry = toScoringLevel(entry)
+  const filteredEntry = baseResult.supportTier ? scoringEntry : withoutNonScoringSubskills(scoringEntry)
   const actualRp = species ? computeRp(entry, species, nature) : null
-  const scoredRp = species
-    ? computeRp(baseResult.supportTier ? entry : withoutNonScoringSubskills(entry), species, nature)
-    : null
-  const idealRp = species ? computeIdealRp(entry, species) : null
+  const scoredRp = species ? computeRp(filteredEntry, species, nature) : null
+  const excludesNonScoringSubskills = species ? scoredRp !== computeRp(scoringEntry, species, nature) : false
+  const idealRp = species ? computeIdealRp(scoringEntry, species) : null
   const rpEfficiency =
     scoredRp != null && idealRp ? Math.max(0, Math.min(100, Math.round((scoredRp / idealRp) * 100))) : null
 
   const score = rpEfficiency != null ? Math.round(build.score * 0.5 + rpEfficiency * 0.5) : build.score
 
-  return { ...baseResult, score, tier: getTier(score), rpEfficiency, actualRp, scoredRp, idealRp }
+  return {
+    ...baseResult,
+    score,
+    tier: getTier(score),
+    rpEfficiency,
+    actualRp,
+    scoredRp,
+    idealRp,
+    excludesNonScoringSubskills,
+  }
+}
+
+// La calidad del ejemplar se evalúa como si el Pokémon estuviera en nivel 80
+// (usuario 2026-11-16), con los 5 slots de sub-skills y los 3 de ingredientes
+// desbloqueados. Así el puntaje no cambia al subir de nivel ni depende de qué
+// slots están bloqueados hoy: antes, con Helping Speed M en el slot 80 de un
+// Pokémon de nivel bajo, "¿Qué le falta?" sugería moverla a un slot
+// desbloqueado, algo imposible en el juego.
+export const SCORING_LEVEL = 80
+
+export function toScoringLevel(entry) {
+  return { ...entry, level: SCORING_LEVEL }
 }
 
 // Dream Shard Bonus, Sleep EXP Bonus y Research EXP Bonus multiplican el RP

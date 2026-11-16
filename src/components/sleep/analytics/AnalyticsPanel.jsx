@@ -91,11 +91,9 @@ export default function AnalyticsPanel() {
               {evaluation.rpEfficiency != null && (
                 <p className="my-[0.1rem] text-gray-600 text-sm">
                   <strong>Calidad del ejemplar:</strong> 50% build ({evaluation.buildScore}%) + 50% eficiencia de RP (
-                  {evaluation.rpEfficiency}%:{' '}
-                  {evaluation.scoredRp !== evaluation.actualRp
-                    ? `${evaluation.scoredRp} RP sin contar sub-skills que no dan calorías (real: ${evaluation.actualRp})`
-                    : `${evaluation.actualRp} RP real`}{' '}
-                  de un techo estimado de {evaluation.idealRp} para este nivel/Ribbon/Main Skill)
+                  {evaluation.rpEfficiency}%: a nivel 80 tendría {evaluation.scoredRp} RP
+                  {evaluation.excludesNonScoringSubskills && ' sin contar sub-skills que no dan calorías'}, de un techo
+                  estimado de {evaluation.idealRp} con su Ribbon/Main Skill)
                 </p>
               )}
               <p className="my-[0.1rem] text-gray-600 text-sm">

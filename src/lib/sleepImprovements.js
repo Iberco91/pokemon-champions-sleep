@@ -17,7 +17,7 @@
 
 import { natureOptions, subskillLevels, subskillOptions } from '../data/sleepData.js'
 import { getIngredientSlotOptions } from '../data/sleepIngredientSlots.js'
-import { evaluateSleepPokemon, getScoringSubskills } from './sleepScoring.js'
+import { evaluateSleepPokemon, getScoringSubskills, SCORING_LEVEL } from './sleepScoring.js'
 
 const MAX_STEPS = 12
 const INGREDIENT_FIELDS = [
@@ -44,15 +44,6 @@ function scoreOf({ entry, nature }, species) {
 function* candidateChanges({ entry, nature }, species) {
   // Intercambiar dos sub-skills de slot importa: para el RP solo cuentan las
   // de slots ya desbloqueados al nivel actual.
-  for (const [index, levelA] of subskillLevels.entries()) {
-    for (const levelB of subskillLevels.slice(index + 1)) {
-      const fieldA = `subskill_${levelA}`
-      const fieldB = `subskill_${levelB}`
-      if ((entry[fieldA] ?? null) === (entry[fieldB] ?? null)) continue
-      yield { patch: { [fieldA]: entry[fieldB] ?? null, [fieldB]: entry[fieldA] ?? null } }
-    }
-  }
-
   for (const level of subskillLevels) {
     const field = `subskill_${level}`
     const otherSubskills = subskillLevels.filter((lvl) => lvl !== level).map((lvl) => entry[`subskill_${lvl}`])
@@ -165,7 +156,8 @@ function countDifferences(a, b) {
 // (de a un cambio) se quedaba en óptimos locales: con La Nae (Togekiss nv.
 // 67) se detenía en 96% cuando 99% era posible cambiando varias a la vez.
 function exhaustiveSubskillsAndNature(start, species) {
-  const level = start.entry.level ?? 1
+  // El puntaje se mide a nivel 80, con todos los slots activos.
+  const level = SCORING_LEVEL
   const activeLevels = subskillLevels.filter((lvl) => level >= lvl)
   const lockedLevels = subskillLevels.filter((lvl) => level < lvl)
   const currentSkills = subskillLevels.map((lvl) => start.entry[`subskill_${lvl}`]).filter(Boolean)

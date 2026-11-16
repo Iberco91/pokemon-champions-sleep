@@ -408,11 +408,10 @@ export default function BoxPanel() {
           )}
           {previewEvaluation?.rpEfficiency != null && (
             <p className="my-[0.2rem] text-gray-600 text-sm">
-              <strong>Eficiencia de RP:</strong> {previewEvaluation.rpEfficiency}% (RP{' '}
-              {previewEvaluation.scoredRp !== previewEvaluation.actualRp
-                ? `${previewEvaluation.scoredRp} sin contar sub-skills que no dan calorías (real: ${previewEvaluation.actualRp})`
-                : previewEvaluation.actualRp}{' '}
-              de un techo estimado de {previewEvaluation.idealRp} para este nivel/Ribbon/Main Skill)
+              <strong>Eficiencia de RP:</strong> {previewEvaluation.rpEfficiency}% (a nivel 80 tendría{' '}
+              {previewEvaluation.scoredRp} RP
+              {previewEvaluation.excludesNonScoringSubskills && ' sin contar sub-skills que no dan calorías'}, de un
+              techo estimado de {previewEvaluation.idealRp} con su Ribbon/Main Skill)
             </p>
           )}
         </div>
