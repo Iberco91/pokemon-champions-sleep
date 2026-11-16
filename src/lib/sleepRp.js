@@ -139,13 +139,16 @@ export function computeRp(entry, species, nature) {
 // calculadoras de IV de la comunidad, ej. nitoyon/pokesleep-tool), y es lo
 // que sleepScoring.js combina con el score estructural existente.
 //
-// Se excluyen del pool de sub-skills candidatas "Inventory Up S/M/L" (su
-// factor RP de 0.071/0.139/0.181 siempre pierde contra cualquiera de las 5
-// sub-skills de 0.221 de MISC_RP_SUBSKILL_FACTORS) y "Skill Level Up S/M"
-// (no tienen ningún término en la fórmula de RP — el nivel de Main Skill se
-// toma directo de entry.skill_level). Mantenerlas fuera reduce el espacio de
-// búsqueda sin cambiar el resultado óptimo.
+// Se excluyen "Skill Level Up S/M" (no tienen ningún término en la fórmula de
+// RP — el nivel de Main Skill se toma directo de entry.skill_level).
+// Inventory Up S/M/L sí entran (corregido 2026-11-16): antes se excluían
+// porque su factor (0.071/0.139/0.181) perdía contra las sub-skills de 0.221,
+// pero esas (Sleep EXP, Dream Shard, etc.) ya no cuentan en el puntaje, y un
+// Bulbasaur con Inventory Up L superaba el techo (5262 contra 5245).
 export const RP_SUBSKILL_CANDIDATES = [
+  'Inventory Up S',
+  'Inventory Up M',
+  'Inventory Up L',
   'Berry Finding S',
   'Helping Speed S',
   'Helping Speed M',
