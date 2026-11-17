@@ -21,7 +21,7 @@
 // supports de energía traen además `supportTier` (ver más abajo), que
 // reemplaza a la tier de RaenonX en la interfaz.
 
-import { subskillLevels } from '../data/sleepData.js'
+import { getNatureStatFactor, subskillLevels } from '../data/sleepData.js'
 import { getSpeciesTier } from '../data/sleepSpeciesTiers.js'
 import { getSupportSpeciesScore, isEnergySupport } from '../data/sleepSupportTiers.js'
 import { getIngredientQuantity } from '../data/sleepIngredientSlots.js'
@@ -217,46 +217,76 @@ function getIngredientCombo(ingredients) {
 // 90+, A 80+, B 70+, C 60+, D 50+, E bajo 50), para que signifiquen lo mismo
 // en todas partes.
 
-// Ejemplar ideal: Skill Trigger M + Helping Speed M + Skill Trigger S + Berry
-// Finding S + una de Helping Bonus / Energy Recovery Bonus / Helping Speed S
-// = 85 puntos, más naturaleza + Main Skill Chance (15) = 100. Berry Finding S
-// no ayuda como support, pero suma cuando la berry del Pokémon es favorita de
-// Snorlax esa semana (pedido del usuario); vale 1 punto más que las de 11
-// para que sin ella el máximo sea 84 y el ideal la exija. Skill Level Up S/M
-// vale 0 (ver cabecera).
+// Ejemplar por activaciones reales (usuario 2026-11-17; antes era una suma
+// de puntos fijos por sub-skill, que dejaba a un Gardevoir con 70% de las
+// activaciones del ideal en 63%). Lo que aporta un support es cuántas veces
+// activa su skill al día, que es proporcional a:
+//   probabilidad de skill × ayudas por día
+//   = naturaleza MSC (×1,2 / ×0,8) × (1 + Skill Trigger S 18% + M 36%)
+//     × 1 / (naturaleza velocidad (×0,9 / ×1,075) × (1 − reducción))
+// con reducción = Helping Speed S 7% + M 14% + Helping Bonus 5% (el propio
+// Pokémon también recibe su Helping Bonus; nerolis-lab member-state.ts),
+// con tope de 35% (MIN_HELP_SPEED_FACTOR de sleepStats.js). Nivel, Ribbon y
+// frecuencia base se cancelan porque se compara con el MISMO Pokémon ideal.
 //
+// Ejemplar ideal: Skill Trigger M + Helping Speed M + Skill Trigger S + Berry
+// Finding S + una de Helping Bonus / Energy Recovery Bonus / Helping Speed S,
+// naturaleza + Main Skill Chance. Las activaciones valen hasta 95 puntos
+// (cociente contra el ideal con Helping Bonus, con tope de 1, así que Helping
+// Speed S como quinta también llega al máximo) y los 5 restantes son extras:
+//   - Berry Finding S (5): no da activaciones, pero suma cuando la berry del
+//     Pokémon es favorita de Snorlax esa semana (pedido del usuario), y el
+//     ideal la exige.
+//   - Dream Shard Bonus / Sleep EXP Bonus / Research EXP Bonus (2 c/u, solo
+//     en supports, decisión del usuario 2026-11-09): poco, para que nunca
+//     reemplacen a las de arriba. Los extras tienen tope de 5.
 // Energy Recovery Bonus suma +14% a la energía que recupera TODO el equipo al
-// dormir (nerolis-lab: member-state.ts cuenta los miembros con ERB del
-// equipo), pero esa recuperación tiene tope de 100, así que no aporta si el
-// usuario duerme ~8,5 h. Por eso vale como Helping Bonus y menos que Skill
-// Trigger M, que da más activaciones de la skill todos los días (acordado con
-// el usuario 2026-10-30).
-const SUPPORT_SUBSKILL_POINTS = {
-  'Skill Trigger M': 26,
-  'Helping Speed M': 22,
-  'Skill Trigger S': 14,
-  'Berry Finding S': 12,
-  'Helping Speed S': 11,
-  'Helping Bonus': 11,
-  'Energy Recovery Bonus': 11,
-  // Solo suman en supports (decisión del usuario 2026-11-09): poco, para que
-  // nunca reemplacen a las de arriba en el ejemplar ideal.
-  'Dream Shard Bonus': 5,
-  'Sleep EXP Bonus': 5,
-  'Research EXP Bonus': 5,
+// dormir, pero esa recuperación tiene tope de 100, así que no aporta si el
+// usuario duerme ~8,5 h. Por acuerdo con el usuario (2026-10-30) vale lo mismo
+// que Helping Bonus, así que se modela con su mismo 5%. Skill Level Up S/M
+// vale 0 (ver cabecera).
+const SUPPORT_SKILL_CHANCE_AMOUNTS = { 'Skill Trigger S': 0.18, 'Skill Trigger M': 0.36 }
+const SUPPORT_SPEED_REDUCTION_AMOUNTS = {
+  'Helping Speed S': 0.07,
+  'Helping Speed M': 0.14,
+  'Helping Bonus': 0.05,
+  'Energy Recovery Bonus': 0.05,
 }
-const MAX_SUPPORT_SUBSKILL_POINTS = 85
+const SUPPORT_MAX_SPEED_REDUCTION = 0.35
+const SUPPORT_EXTRA_POINTS = {
+  'Berry Finding S': 5,
+  'Dream Shard Bonus': 2,
+  'Sleep EXP Bonus': 2,
+  'Research EXP Bonus': 2,
+}
+const SUPPORT_ACTIVATION_WEIGHT = 95
+const SUPPORT_MAX_EXTRA_POINTS = 5
+const SUPPORT_IDEAL_SUBSKILLS = ['Skill Trigger M', 'Helping Speed M', 'Skill Trigger S', 'Berry Finding S', 'Helping Bonus']
+const SUPPORT_IDEAL_NATURE = { positive: 'Main Skill Chance', negative: null }
+// Sub-skills que mueven el puntaje del support (getScoringSubskills).
+const SUPPORT_SCORING_SUBSKILLS = [
+  ...Object.keys(SUPPORT_SKILL_CHANCE_AMOUNTS),
+  ...Object.keys(SUPPORT_SPEED_REDUCTION_AMOUNTS),
+  ...Object.keys(SUPPORT_EXTRA_POINTS),
+]
 
-function getSupportNaturePoints(nature) {
-  if (nature?.positive === 'Main Skill Chance') return 15
-  if (nature?.positive === 'Helping Speed') return 10
-  if (nature?.negative === 'Main Skill Chance' || nature?.negative === 'Helping Speed') return 0
-  return 7
+function computeSupportActivations(subskills, nature) {
+  const sumOf = (amounts) => subskills.reduce((sum, skill) => sum + (amounts[skill] ?? 0), 0)
+  const skillChance = getNatureStatFactor(nature, 'Main Skill Chance') * (1 + sumOf(SUPPORT_SKILL_CHANCE_AMOUNTS))
+  const speedReduction = Math.min(SUPPORT_MAX_SPEED_REDUCTION, sumOf(SUPPORT_SPEED_REDUCTION_AMOUNTS))
+  const helpTimeFactor = getNatureStatFactor(nature, 'Helping Speed') * (1 - speedReduction)
+  return skillChance / helpTimeFactor
 }
+
+const SUPPORT_IDEAL_ACTIVATIONS = computeSupportActivations(SUPPORT_IDEAL_SUBSKILLS, SUPPORT_IDEAL_NATURE)
 
 function computeSupportSpecimenScore(subskills, nature) {
-  const subskillPoints = subskills.reduce((sum, skill) => sum + (SUPPORT_SUBSKILL_POINTS[skill] ?? 0), 0)
-  return Math.round(Math.min(MAX_SUPPORT_SUBSKILL_POINTS, subskillPoints) + getSupportNaturePoints(nature))
+  const activationRatio = Math.min(1, computeSupportActivations(subskills, nature) / SUPPORT_IDEAL_ACTIVATIONS)
+  const extraPoints = Math.min(
+    SUPPORT_MAX_EXTRA_POINTS,
+    subskills.reduce((sum, skill) => sum + (SUPPORT_EXTRA_POINTS[skill] ?? 0), 0),
+  )
+  return Math.round(Math.min(100, activationRatio * SUPPORT_ACTIVATION_WEIGHT + extraPoints))
 }
 
 function computeSupportTier(species, subskills, nature) {
@@ -410,7 +440,7 @@ export function toScoringLevel(entry) {
 // Energy Recovery Bonus entra en la misma lista (usuario 2026-11-11): también
 // suma +22,1% al RP, pero no aumenta la producción del Pokémon (solo la
 // energía del equipo al dormir, que tiene tope de 100). En supports sigue
-// valiendo sus puntos de SUPPORT_SUBSKILL_POINTS.
+// valiendo lo mismo que Helping Bonus (computeSupportSpecimenScore).
 const NON_SCORING_RP_SUBSKILLS = ['Dream Shard Bonus', 'Sleep EXP Bonus', 'Research EXP Bonus', 'Energy Recovery Bonus']
 
 // Berry Finding S tampoco cuenta en el RP de los especialistas en
@@ -444,7 +474,7 @@ export function getScoringSubskills(species) {
     MANDATORY_BERRY_SUBSKILL,
     ...RP_SUBSKILL_CANDIDATES,
     'Energy Recovery Bonus',
-    ...(support ? Object.keys(SUPPORT_SUBSKILL_POINTS) : []),
+    ...(support ? SUPPORT_SCORING_SUBSKILLS : []),
   ])
   if (!support) NON_SCORING_RP_SUBSKILLS.forEach((skill) => pool.delete(skill))
   return [...pool]
