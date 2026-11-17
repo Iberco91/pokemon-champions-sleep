@@ -321,18 +321,36 @@ function computeSupportSpecimenScore(subskills, nature) {
   return Math.round(Math.min(100, activationRatio * SUPPORT_ACTIVATION_WEIGHT + extraPoints))
 }
 
-function computeSupportTier(species, subskills, nature) {
+// Solo los especialistas en Skills con skill de energía se puntúan como
+// support (usuario 2026-11-17). Happiny/Chansey/Blissey y Comfey
+// (Ingredientes) y Vulpix/Ninetales (Berries) tienen skill de energía, pero
+// la activan poco (Chansey 2,3%) y entregan menos de la mitad de la energía
+// de Gardevoir: valen sobre todo por su especialidad, así que su ejemplar se
+// evalúa como cualquier otro de Ingredientes/Berries. Siguen mostrando cuánta
+// energía entrega la especie (energySupportInfo) y el Optimizer los puede
+// usar como support del equipo si tienen Energy for Everyone S
+// (sleepOptimizer.js#findSupportCandidates mira solo la Main Skill).
+export function scoresAsSupport(species) {
+  return isEnergySupport(species) && species?.specialty === 'Skills'
+}
+
+function getEnergySupportInfo(species) {
   if (!isEnergySupport(species)) return null
   const speciesScore = getSupportSpeciesScore(species)
   if (!speciesScore) return null
-  const specimenScore = computeSupportSpecimenScore(subskills, nature)
   return {
     speciesScore: speciesScore.score,
     speciesTier: getTier(speciesScore.score),
     teamEnergy: speciesScore.teamEnergy,
-    specimenScore,
-    specimenTier: getTier(specimenScore),
   }
+}
+
+function computeSupportTier(species, subskills, nature) {
+  if (!scoresAsSupport(species)) return null
+  const info = getEnergySupportInfo(species)
+  if (!info) return null
+  const specimenScore = computeSupportSpecimenScore(subskills, nature)
+  return { ...info, specimenScore, specimenTier: getTier(specimenScore) }
 }
 
 function getMatchedDesiredSubskills(subskills, desired) {
@@ -410,6 +428,7 @@ export function evaluateSleepPokemon({ entry, species, nature }) {
     buildScore: build.score,
     speciesTier: getSpeciesTier(species),
     supportTier: computeSupportTier(species, subskills, nature),
+    energySupportInfo: getEnergySupportInfo(species),
   }
 
   if (!build.mandatoryMet) {
@@ -497,7 +516,7 @@ function withoutNonScoringSubskills(entry, specialty) {
 // exhaustiva: build de la especialidad, Berry Finding S (obligatoria en
 // Berries), las que suben el RP que puntúa y, en supports, las de su tier.
 export function getScoringSubskills(species) {
-  const support = isEnergySupport(species)
+  const support = scoresAsSupport(species)
   const pool = new Set([
     ...Object.keys(SUBSKILL_POINTS_BY_SPECIALTY[species?.specialty] ?? {}),
     MANDATORY_BERRY_SUBSKILL,

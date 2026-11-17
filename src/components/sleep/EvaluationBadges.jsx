@@ -30,6 +30,10 @@ const badgeClass = 'px-2 py-[0.1rem] rounded-full text-xs font-bold'
 export default function EvaluationBadges({ evaluation }) {
   if (!evaluation) return null
   const { speciesTier, supportTier } = evaluation
+  // Skill de energía en un Pokémon de Ingredientes/Berries (Chansey, Comfey,
+  // Ninetales...): se evalúa por su especialidad, pero se informa cuánta
+  // energía entrega como support (sleepScoring.js#scoresAsSupport).
+  const secondarySupport = supportTier ? null : evaluation.energySupportInfo
 
   return (
     <div className="flex flex-col gap-1">
@@ -66,6 +70,14 @@ export default function EvaluationBadges({ evaluation }) {
             Calidad del ejemplar: {evaluation.tier} ({evaluation.score}%)
           </span>
         )}
+        {secondarySupport && (
+          <span
+            className={`${badgeClass} ${SPECIES_TIER_BADGE_CLASS[secondarySupport.speciesTier]}`}
+            title={`Como support: ${secondarySupport.speciesScore}% de la energía que entrega Gardevoir (${secondarySupport.teamEnergy.toLocaleString('es-CL')} de energía diaria al equipo). Su ejemplar se evalúa por su especialidad.`}
+          >
+            Support: Tier {secondarySupport.speciesTier} ({secondarySupport.speciesScore}%)
+          </span>
+        )}
         {!evaluation.mandatoryMet && (
           <span className="text-red-600 text-xs font-semibold">Falta Berry Finding S (obligatorio)</span>
         )}
@@ -73,6 +85,12 @@ export default function EvaluationBadges({ evaluation }) {
       {supportTier && (
         <p className="m-0 text-xs text-gray-500">
           Especie entre supports: {supportTier.speciesScore}% de la energía que entrega Gardevoir, la mejor support
+        </p>
+      )}
+      {secondarySupport && (
+        <p className="m-0 text-xs text-gray-500">
+          Tiene skill de energía y puede ser el support del equipo ({secondarySupport.speciesScore}% de la energía de
+          Gardevoir), pero su ejemplar se evalúa como Pokémon de {evaluation.specialty === 'Berries' ? 'Berries' : 'Ingredientes'}.
         </p>
       )}
     </div>
