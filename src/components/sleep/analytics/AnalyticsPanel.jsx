@@ -90,7 +90,9 @@ export default function AnalyticsPanel() {
               </p>
               {evaluation.rpEfficiency != null && (
                 <p className="my-[0.1rem] text-gray-600 text-sm">
-                  <strong>Calidad del ejemplar:</strong> 50% build ({evaluation.buildScore}%) + 50% eficiencia de RP (
+                  <strong>Calidad del ejemplar:</strong> {Math.round(evaluation.buildWeight * 100)}%{' '}
+                  {evaluation.specialty === 'Skills' ? 'activaciones de skill vs. el ideal' : 'build'} (
+                  {evaluation.buildScore}%) + {Math.round((1 - evaluation.buildWeight) * 100)}% eficiencia de RP (
                   {evaluation.rpEfficiency}%: a nivel 80 tendría {evaluation.scoredRp} RP
                   {evaluation.excludesNonScoringSubskills && ' sin contar sub-skills que no dan calorías'}, de un techo
                   estimado de {evaluation.idealRp} con su Ribbon/Main Skill)

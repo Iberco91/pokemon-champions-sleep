@@ -118,7 +118,8 @@ const DESIRED_SUBSKILLS_BY_SPECIALTY = {
 // en el ejemplar ideal ni aparece como mejora sobre una deseada.
 const SECONDARY_SUBSKILL_POINTS_BY_SPECIALTY = {
   Ingredients: { 'Berry Finding S': 2 },
-  Skills: { 'Berry Finding S': 4 },
+  // Skills: Berry Finding S suma SKILLS_BERRY_FINDING_POINTS en su puntaje de
+  // activaciones (computeSkillsActivationScore).
 }
 
 function sumSecondarySubskillPoints(specialty, subskills) {
@@ -270,12 +271,43 @@ const SUPPORT_SCORING_SUBSKILLS = [
   ...Object.keys(SUPPORT_EXTRA_POINTS),
 ]
 
-function computeSupportActivations(subskills, nature) {
+function computeSupportActivations(subskills, nature, speedAmounts = SUPPORT_SPEED_REDUCTION_AMOUNTS) {
   const sumOf = (amounts) => subskills.reduce((sum, skill) => sum + (amounts[skill] ?? 0), 0)
   const skillChance = getNatureStatFactor(nature, 'Main Skill Chance') * (1 + sumOf(SUPPORT_SKILL_CHANCE_AMOUNTS))
-  const speedReduction = Math.min(SUPPORT_MAX_SPEED_REDUCTION, sumOf(SUPPORT_SPEED_REDUCTION_AMOUNTS))
+  const speedReduction = Math.min(SUPPORT_MAX_SPEED_REDUCTION, sumOf(speedAmounts))
   const helpTimeFactor = getNatureStatFactor(nature, 'Helping Speed') * (1 - speedReduction)
   return skillChance / helpTimeFactor
+}
+
+// --- Skills que no son support -------------------------------------------
+//
+// (Usuario 2026-11-17.) Antes usaban el build de puntos fijos (40 base +
+// sub-skills + naturaleza) 50/50 con la eficiencia de RP, y Skill Trigger M
+// valía lo mismo que Helping Speed M: en Sceptile, perder cualquiera dejaba
+// 86%, aunque sin STM activa la skill ~77% del ideal y sin HSM ~84%. Ahora la
+// parte de estructura son las activaciones reales de skill contra el ideal
+// (mismo cálculo que los supports) y pesa 70%; la eficiencia de RP pesa 30%,
+// para que cuenten algo las berries/ingredientes de sus ayudas normales.
+// Ideal: SKILLS_IDEAL_SUBSKILLS de sleepRp.js + naturaleza Main Skill Chance.
+// Energy Recovery Bonus no da activaciones aquí (fuera de supports no suma,
+// decisión del usuario 2026-11-11). Berry Finding S suma 3 (antes 4 de 50):
+// da 1 berry más por recolección, pero nunca entra en el ideal.
+const SKILLS_SPEED_REDUCTION_AMOUNTS = { 'Helping Speed S': 0.07, 'Helping Speed M': 0.14, 'Helping Bonus': 0.05 }
+const SKILLS_IDEAL_ACTIVATIONS = computeSupportActivations(
+  ['Skill Trigger M', 'Skill Trigger S', 'Helping Speed M', 'Helping Speed S', 'Helping Bonus'],
+  SUPPORT_IDEAL_NATURE,
+  SKILLS_SPEED_REDUCTION_AMOUNTS,
+)
+const SKILLS_BERRY_FINDING_POINTS = 3
+const SKILLS_ACTIVATION_WEIGHT = 0.7
+
+function computeSkillsActivationScore(subskills, nature) {
+  const ratio = Math.min(
+    1,
+    computeSupportActivations(subskills, nature, SKILLS_SPEED_REDUCTION_AMOUNTS) / SKILLS_IDEAL_ACTIVATIONS,
+  )
+  const bonus = subskills.includes(MANDATORY_BERRY_SUBSKILL) ? SKILLS_BERRY_FINDING_POINTS : 0
+  return Math.round(Math.min(100, ratio * 100 + bonus))
 }
 
 const SUPPORT_IDEAL_ACTIVATIONS = computeSupportActivations(SUPPORT_IDEAL_SUBSKILLS, SUPPORT_IDEAL_NATURE)
@@ -310,7 +342,7 @@ function getMatchedDesiredSubskills(subskills, desired) {
 // Puntaje estructural ("build score") por especialidad: qué tan bien
 // elegidas están las sub-skills/ingredientes/naturaleza en abstracto, sin
 // mirar el RP real. Es la mitad del score final (ver evaluateSleepPokemon).
-function computeBuildScore(specialty, subskills, ingredients, natureOptimal, matchedDesiredSubskills, speciesName) {
+function computeBuildScore(specialty, subskills, ingredients, natureOptimal, matchedDesiredSubskills, speciesName, nature) {
   if (specialty === 'Berries') {
     const mandatoryMet = subskills.includes(MANDATORY_BERRY_SUBSKILL)
     if (!mandatoryMet) return { score: 0, mandatoryMet: false, ingredientCombo: null }
@@ -342,15 +374,9 @@ function computeBuildScore(specialty, subskills, ingredients, natureOptimal, mat
   }
 
   if (specialty === 'Skills') {
-    // "Sin filtro estricto, pero prioriza activación": base más baja que
-    // Berries/Ingredients porque no hay criterio obligatorio que garantice
-    // un piso de calidad.
-    const subskillPoints = Math.min(
-      50,
-      sumSubskillPoints(specialty, matchedDesiredSubskills) + sumSecondarySubskillPoints(specialty, subskills),
-    )
-    const score = Math.min(100, 40 + subskillPoints + (natureOptimal ? 10 : 0))
-    return { score, mandatoryMet: true, ingredientCombo: null }
+    // "Sin filtro estricto, pero prioriza activación": activaciones reales
+    // de skill contra el ideal (ver computeSkillsActivationScore).
+    return { score: computeSkillsActivationScore(subskills, nature), mandatoryMet: true, ingredientCombo: null }
   }
 
   return { score: 0, mandatoryMet: false, ingredientCombo: null }
@@ -372,7 +398,7 @@ export function evaluateSleepPokemon({ entry, species, nature }) {
   const natureOptimal = Boolean(optimalNatureStat) && naturePositiveStat === optimalNatureStat
   const matchedDesiredSubskills = getMatchedDesiredSubskills(subskills, desiredSubskills)
 
-  const build = computeBuildScore(specialty, subskills, ingredients, natureOptimal, matchedDesiredSubskills, species?.name)
+  const build = computeBuildScore(specialty, subskills, ingredients, natureOptimal, matchedDesiredSubskills, species?.name, nature)
 
   const baseResult = {
     specialty,
@@ -401,10 +427,13 @@ export function evaluateSleepPokemon({ entry, species, nature }) {
   const rpEfficiency =
     scoredRp != null && idealRp ? Math.max(0, Math.min(100, Math.round((scoredRp / idealRp) * 100))) : null
 
-  const score = rpEfficiency != null ? Math.round(build.score * 0.5 + rpEfficiency * 0.5) : build.score
+  const buildWeight = specialty === 'Skills' ? SKILLS_ACTIVATION_WEIGHT : 0.5
+  const score =
+    rpEfficiency != null ? Math.round(build.score * buildWeight + rpEfficiency * (1 - buildWeight)) : build.score
 
   return {
     ...baseResult,
+    buildWeight,
     score,
     tier: getTier(score),
     rpEfficiency,
