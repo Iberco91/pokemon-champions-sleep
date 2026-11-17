@@ -40,7 +40,7 @@ export function computeCarryLimit(entry, species) {
 // nivel (-0.2%/nivel), naturaleza, sub-skills de velocidad y Ribbon (solo
 // afecta a Pokémon que aún no llegan a su evolución final). Se expone aparte
 // porque sleepRp.js necesita el mismo multiplicador para el cálculo de RP.
-export function computeFrequencyMultiplier(entry, species, nature) {
+export function computeFrequencyMultiplier(entry, species, nature, { raw = false } = {}) {
   const level = entry.level ?? 1
   const levelFactor = 1 - 0.002 * (level - 1)
   const natureFactor = getNatureStatFactor(nature, 'Helping Speed')
@@ -49,7 +49,8 @@ export function computeFrequencyMultiplier(entry, species, nature) {
     1 - getActiveSubskills(entry).reduce((sum, skill) => sum + (HELPING_SPEED_PERCENT[skill] ?? 0), 0),
   )
   const ribbonFactor = calculateRibbonFrequencyFactor(species?.remaining_evolutions, entry.ribbon_level ?? 0)
-  return Math.round(levelFactor * natureFactor * subskillFactor * ribbonFactor * 10000) / 10000
+  const multiplier = levelFactor * natureFactor * subskillFactor * ribbonFactor
+  return raw ? multiplier : Math.round(multiplier * 10000) / 10000
 }
 
 // Frecuencia real (segundos por ayuda) = frecuencia base de la especie ×

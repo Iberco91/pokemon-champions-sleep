@@ -49,7 +49,9 @@ function getSkillChance(entry, species, nature) {
 // (distinta en su redondeo a computeFrequencySeconds, que sirve para mostrar
 // la frecuencia — misma base, uso distinto, igual que en la fuente original).
 function getHelpFactor(entry, species, nature) {
-  const multiplier = computeFrequencyMultiplier(entry, species, nature)
+  // nerolis-lab trunca el multiplicador a 4 decimales (computeFrequencyMultiplier
+  // lo redondea para mostrar la frecuencia).
+  const multiplier = floorWithCorrection(computeFrequencyMultiplier(entry, species, nature, { raw: true }), 4)
   return 5 * floorWithCorrection(3600 / (species.base_frequency_seconds * multiplier), 2)
 }
 
@@ -108,7 +110,10 @@ function getMiscFactor(entry, nature) {
     (sum, skill) => sum + (MISC_RP_SUBSKILL_FACTORS[skill] ?? 0),
     0,
   )
-  return Math.round(convertedNatureEnergy * (1 + subskillBonus) * 100) / 100
+  // Truncado, no redondeado (nerolis-lab: floorWithIEEE754Correction). Con
+  // Math.round un Bewear con solo Inventory Up M (1,139) quedaba en 1,14 y
+  // daba 2811 RP contra 2786 del juego (usuario 2026-11-17).
+  return floorWithCorrection(convertedNatureEnergy * (1 + subskillBonus), 2)
 }
 
 // RP total del Pokémon a su nivel, sub-skills, naturaleza, ingredientes,
