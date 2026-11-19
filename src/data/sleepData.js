@@ -27,6 +27,29 @@ export const subskillOptions = [
   'Sleep EXP Bonus',
 ]
 
+// Rareza (color del juego) de cada sub-skill: white = incolora, silver = azul,
+// gold = dorada. Verificado 2026-11-19 contra nerolis-lab
+// (common/src/types/subskill/subskills.ts, campo rarity).
+export const subskillRarity = {
+  'Berry Finding S': 'gold',
+  'Dream Shard Bonus': 'gold',
+  'Energy Recovery Bonus': 'gold',
+  'Helping Bonus': 'gold',
+  'Helping Speed S': 'white',
+  'Helping Speed M': 'silver',
+  'Ingredient Finder S': 'white',
+  'Ingredient Finder M': 'silver',
+  'Inventory Up S': 'white',
+  'Inventory Up M': 'silver',
+  'Inventory Up L': 'silver',
+  'Research EXP Bonus': 'gold',
+  'Skill Level Up S': 'silver',
+  'Skill Level Up M': 'gold',
+  'Skill Trigger S': 'white',
+  'Skill Trigger M': 'silver',
+  'Sleep EXP Bonus': 'gold',
+}
+
 // Las 25 naturalezas oficiales del juego. positive/negative usan los mismos
 // nombres de stat que sleepStats.js ('Helping Speed', 'Ingredient Finding',
 // 'Main Skill Chance', 'EXP Gain', 'Energy Recovery'). Verificado contra

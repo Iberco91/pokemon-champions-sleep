@@ -3,6 +3,7 @@ import { useAuth } from '../../../hooks/useAuth.js'
 import { useSpeciesCatalog } from '../../../hooks/useSpeciesCatalog.js'
 import { useSleepBox } from '../../../hooks/useSleepBox.js'
 import { natureOptions, sleepLevels, subskillLevels, subskillOptions } from '../../../data/sleepData.js'
+import { getSubskillStyle } from './subskillRarityStyle.js'
 import { getIngredientSlotOptions } from '../../../data/sleepIngredientSlots.js'
 import {
   computeCarryLimit,
@@ -304,10 +305,11 @@ export default function BoxPanel() {
                 value={form[`subskill_${level}`]}
                 onChange={handleChange}
                 className={selectClass}
+                style={getSubskillStyle(form[`subskill_${level}`])}
               >
-                <option value="">—</option>
+                <option value="" style={getSubskillStyle('Helping Speed S')}>—</option>
                 {subskillOptions.map((opt) => (
-                  <option key={opt} value={opt}>
+                  <option key={opt} value={opt} style={getSubskillStyle(opt)}>
                     {opt}
                   </option>
                 ))}

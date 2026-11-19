@@ -3,6 +3,7 @@ import { computeCarryLimit, computeFrequencySeconds, formatFrequency } from '../
 import { computeRp } from '../../../lib/sleepRp.js'
 import { evaluateSleepPokemon } from '../../../lib/sleepScoring.js'
 import { natureOptions, sleepLevels, subskillLevels, subskillOptions } from '../../../data/sleepData.js'
+import { getSubskillStyle } from './subskillRarityStyle.js'
 import { getIngredientQuantity, getIngredientSlotOptions } from '../../../data/sleepIngredientSlots.js'
 import { getMainSkillMaxLevel } from '../../../data/sleepRpTables.js'
 import EvaluationBadges from '../EvaluationBadges.jsx'
@@ -185,10 +186,11 @@ export default function PokemonDetailModal({ entry, onClose, onLevelChange, onSa
                   value={editForm[`subskill_${level}`]}
                   onChange={handleEditChange}
                   className={selectClass}
+                  style={getSubskillStyle(editForm[`subskill_${level}`])}
                 >
-                  <option value="">—</option>
+                  <option value="" style={getSubskillStyle('Helping Speed S')}>—</option>
                   {subskillOptions.map((opt) => (
-                    <option key={opt} value={opt}>
+                    <option key={opt} value={opt} style={getSubskillStyle(opt)}>
                       {opt}
                     </option>
                   ))}
