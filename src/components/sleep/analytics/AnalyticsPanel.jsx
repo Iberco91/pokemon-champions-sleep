@@ -94,7 +94,8 @@ export default function AnalyticsPanel() {
                   {evaluation.specialty === 'Skills' ? 'activaciones de skill vs. el ideal' : 'build'} (
                   {evaluation.buildScore}%) + {Math.round((1 - evaluation.buildWeight) * 100)}% eficiencia de RP (
                   {evaluation.rpEfficiency}%: a nivel 80 tendría {evaluation.scoredRp} RP
-                  {evaluation.excludesNonScoringSubskills && ' sin contar sub-skills que no dan calorías'}, de un techo
+                  {evaluation.excludesNonScoringSubskills && ' sin contar sub-skills que no dan calorías'}
+                  {evaluation.excludesNatureEnergyRecovery && ' sin contar el efecto de Energy Recovery de la naturaleza'}, de un techo
                   estimado de {evaluation.idealRp} con su Ribbon/Main Skill)
                 </p>
               )}

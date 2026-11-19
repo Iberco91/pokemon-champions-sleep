@@ -443,6 +443,9 @@ export function evaluateSleepPokemon({ entry, species, nature }) {
   const actualRp = species ? computeRp(entry, species, nature) : null
   const scoredRp = species ? computeRp(filteredEntry, species, scoringNature) : null
   const excludesNonScoringSubskills = species ? scoredRp !== computeRp(scoringEntry, species, scoringNature) : false
+  // El RP que puntúa ya no calza con el del juego cuando la naturaleza toca
+  // Energy Recovery; la UI lo aclara junto al número.
+  const excludesNatureEnergyRecovery = getNatureStatFactor(nature, 'Energy Recovery') !== 1
   const idealRp = species ? computeIdealRp(scoringEntry, species) : null
   const rpEfficiency =
     scoredRp != null && idealRp ? Math.max(0, Math.min(100, Math.round((scoredRp / idealRp) * 100))) : null
@@ -461,6 +464,7 @@ export function evaluateSleepPokemon({ entry, species, nature }) {
     scoredRp,
     idealRp,
     excludesNonScoringSubskills,
+    excludesNatureEnergyRecovery,
   }
 }
 

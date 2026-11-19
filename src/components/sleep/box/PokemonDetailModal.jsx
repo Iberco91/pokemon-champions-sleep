@@ -341,7 +341,8 @@ export default function PokemonDetailModal({ entry, onClose, onLevelChange, onSa
                   <span className="text-gray-500">
                     {' '}
                     (a nivel 80: {evaluation.rpEfficiency}% de su techo estimado de {evaluation.idealRp} con su
-                    Ribbon/Main Skill{evaluation.excludesNonScoringSubskills && ', sin contar sub-skills que no dan calorías'})
+                    Ribbon/Main Skill{evaluation.excludesNonScoringSubskills && ', sin contar sub-skills que no dan calorías'}
+                    {evaluation.excludesNatureEnergyRecovery && ', sin contar el efecto de Energy Recovery de la naturaleza'})
                   </span>
                 )}
               </p>

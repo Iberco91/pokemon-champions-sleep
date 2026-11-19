@@ -410,7 +410,8 @@ export default function BoxPanel() {
             <p className="my-[0.2rem] text-gray-600 text-sm">
               <strong>Eficiencia de RP:</strong> {previewEvaluation.rpEfficiency}% (a nivel 80 tendría{' '}
               {previewEvaluation.scoredRp} RP
-              {previewEvaluation.excludesNonScoringSubskills && ' sin contar sub-skills que no dan calorías'}, de un
+              {previewEvaluation.excludesNonScoringSubskills && ' sin contar sub-skills que no dan calorías'}
+              {previewEvaluation.excludesNatureEnergyRecovery && ' sin contar el efecto de Energy Recovery de la naturaleza'}, de un
               techo estimado de {previewEvaluation.idealRp} con su Ribbon/Main Skill)
             </p>
           )}
