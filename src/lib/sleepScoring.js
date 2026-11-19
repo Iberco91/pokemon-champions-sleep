@@ -439,9 +439,10 @@ export function evaluateSleepPokemon({ entry, species, nature }) {
   // real (actualRp) sigue siendo el del nivel actual.
   const scoringEntry = toScoringLevel(entry)
   const filteredEntry = baseResult.supportTier ? scoringEntry : withoutNonScoringSubskills(scoringEntry, specialty)
+  const scoringNature = withoutEnergyRecovery(nature)
   const actualRp = species ? computeRp(entry, species, nature) : null
-  const scoredRp = species ? computeRp(filteredEntry, species, nature) : null
-  const excludesNonScoringSubskills = species ? scoredRp !== computeRp(scoringEntry, species, nature) : false
+  const scoredRp = species ? computeRp(filteredEntry, species, scoringNature) : null
+  const excludesNonScoringSubskills = species ? scoredRp !== computeRp(scoringEntry, species, scoringNature) : false
   const idealRp = species ? computeIdealRp(scoringEntry, species) : null
   const rpEfficiency =
     scoredRp != null && idealRp ? Math.max(0, Math.min(100, Math.round((scoredRp / idealRp) * 100))) : null
@@ -489,6 +490,20 @@ export function toScoringLevel(entry) {
 // suma +22,1% al RP, pero no aumenta la producción del Pokémon (solo la
 // energía del equipo al dormir, que tiene tope de 100). En supports sigue
 // valiendo lo mismo que Helping Bonus (computeSupportSpecimenScore).
+// La Energy Recovery de la naturaleza tampoco cuenta en el RP que puntúa
+// (usuario 2026-11-19, Vikavolt Mild vs Quiet). La fórmula del juego multiplica
+// el RP por 0,92 con −Energy Recovery (1,08 con +), pero con un support de
+// energía el Pokémon se mantiene sobre 80% casi todo el día y su producción
+// real casi no cambia. Así Mild (+IF/−ER) y Quiet (+IF/−EXP) puntúan igual.
+function withoutEnergyRecovery(nature) {
+  if (!nature) return nature
+  return {
+    ...nature,
+    positive: nature.positive === 'Energy Recovery' ? null : nature.positive,
+    negative: nature.negative === 'Energy Recovery' ? null : nature.negative,
+  }
+}
+
 const NON_SCORING_RP_SUBSKILLS = ['Dream Shard Bonus', 'Sleep EXP Bonus', 'Research EXP Bonus', 'Energy Recovery Bonus']
 
 // Berry Finding S tampoco cuenta en el RP de los especialistas en
